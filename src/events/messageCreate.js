@@ -7,6 +7,7 @@ import { isOwner } from '../utils/permissionGuard.js';
 import * as saveserver from '../commands/Minecraft/saveserver.js';
 import * as loadserver from '../commands/Minecraft/loadserver.js';
 import * as serverstatus from '../commands/Minecraft/serverstatus.js';
+import * as admin from '../commands/Admin/admin.js';
 import { readFileSync, existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -22,6 +23,7 @@ const BUILT_IN_PREFIX_COMMANDS = new Map([
   ['saveserver', saveserver],
   ['loadserver', loadserver],
   ['serverstatus', serverstatus],
+  ['admin', admin],
 ]);
 
 function loadCustomCommands() {
