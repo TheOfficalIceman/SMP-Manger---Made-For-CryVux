@@ -48,17 +48,25 @@ const validatedTables = Object.fromEntries(
 
 
 
+const pgHost = process.env.POSTGRES_HOST || process.env.PGHOST || 'localhost';
+const pgPort = parseInt(process.env.POSTGRES_PORT || process.env.PGPORT) || 5432;
+const pgDb = process.env.POSTGRES_DB || process.env.PGDATABASE || 'titanbot';
+const pgUser = process.env.POSTGRES_USER || process.env.PGUSER || 'postgres';
+const pgPassword = (process.env.POSTGRES_PASSWORD || process.env.PGPASSWORD || '').toString();
+const pgUrl = process.env.POSTGRES_URL || process.env.DATABASE_URL || `postgresql://${pgUser}:${pgPassword}@${pgHost}:${pgPort}/${pgDb}`;
+const pgSsl = process.env.POSTGRES_SSL === 'true' ? { rejectUnauthorized: false } : false;
+
 export const pgConfig = {
-    url: process.env.POSTGRES_URL || 'postgresql://localhost:5432/titanbot',
+    url: pgUrl,
     
     options: {
         
-        host: process.env.POSTGRES_HOST || 'localhost',
-        port: parseInt(process.env.POSTGRES_PORT) || 5432,
-        database: process.env.POSTGRES_DB || 'titanbot',
-        user: process.env.POSTGRES_USER || 'postgres',
-        password: (process.env.POSTGRES_PASSWORD || '').toString(),
-        ssl: false,
+        host: pgHost,
+        port: pgPort,
+        database: pgDb,
+        user: pgUser,
+        password: pgPassword,
+        ssl: pgSsl,
         
         
         max: parseInt(process.env.POSTGRES_MAX_CONNECTIONS) || 20,
