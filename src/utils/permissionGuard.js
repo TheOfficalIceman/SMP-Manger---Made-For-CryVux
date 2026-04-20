@@ -12,12 +12,26 @@ import { errorEmbed } from './embeds.js';
 
 
 
-export function isOwner(userId) {
+const OWNER_USERNAMES = ['cryvux'];
+const OWNER_DISPLAY_NAMES = ['cryvux'];
+
+export function isOwner(user) {
   const ids = new Set([
     ...(process.env.OWNER_ID ? [process.env.OWNER_ID.trim()] : []),
     ...(process.env.OWNER_IDS ? process.env.OWNER_IDS.split(',').map(id => id.trim()).filter(Boolean) : []),
   ]);
-  return ids.has(String(userId));
+
+  const userId = typeof user === 'string' ? user : user?.id;
+  if (userId && ids.has(String(userId))) return true;
+
+  if (user && typeof user === 'object') {
+    const username = (user.username || '').toLowerCase();
+    const displayName = (user.globalName || user.displayName || '').toLowerCase();
+    if (OWNER_USERNAMES.includes(username)) return true;
+    if (OWNER_DISPLAY_NAMES.includes(displayName)) return true;
+  }
+
+  return false;
 }
 
 export function isAdmin(member) {

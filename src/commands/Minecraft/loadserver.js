@@ -9,7 +9,7 @@ export const prefixData = {
 };
 
 export async function execute(message, args, client) {
-  if (!isOwner(message.author.id)) {
+  if (!isOwner(message.author)) {
     return message.reply('❌ Only the bot owner can use this command.');
   }
 

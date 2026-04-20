@@ -69,7 +69,7 @@ async function handlePrefixCommand(message, client) {
   if (!custom) return;
 
   try {
-    if (custom.ownerOnly && !isOwner(message.author.id)) {
+    if (custom.ownerOnly && !isOwner(message.author)) {
       return message.reply('❌ Only the bot owner can use this command.');
     }
 

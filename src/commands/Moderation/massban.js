@@ -42,7 +42,7 @@ export default {
             return;
         }
 
-        if (!isOwner(interaction.user.id) && !interaction.member.permissions.has(PermissionFlagsBits.BanMembers)) {
+        if (!isOwner(interaction.user) && !interaction.member.permissions.has(PermissionFlagsBits.BanMembers)) {
             return await InteractionHelper.safeEditReply(interaction, {
                 embeds: [
                     errorEmbed(
