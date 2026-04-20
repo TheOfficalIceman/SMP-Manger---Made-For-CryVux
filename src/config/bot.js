@@ -17,7 +17,7 @@ export const botConfig = {
   // - "invisible" = appears offline
   presence: {
     // Current online state shown on Discord.
-    status: "online",
+    status: "away",
 
     // Activity lines shown under the bot name.
     // `type` number mapping from Discord:
@@ -30,9 +30,9 @@ export const botConfig = {
     activities: [
       {
         // Text users will see (example: "Playing /help | Titan Bot").
-        name: "Made with ❤️",
+        name: "Watching ShardAscension",
         // Activity type number (0 = Playing).
-        type: 0, 
+        type: 3, 
       },
     ],
   },
@@ -141,7 +141,7 @@ export const botConfig = {
     },
     footer: {
       // Default footer text used in bot embeds.
-      text: "Titan Bot",
+      text: "SMP Manger",
       // Footer icon URL (null = no icon).
       icon: null,
     },
@@ -209,7 +209,7 @@ export const botConfig = {
     defaultCategory: null,
 
     // Role IDs allowed to manage/support tickets.
-    supportRoles: [],
+    supportRoles: [1495803676147712142],
 
     // Priority options users/staff can assign.
     priorities: {
