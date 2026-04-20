@@ -12,6 +12,7 @@ import { logger, startupLog, shutdownLog } from './utils/logger.js';
 import { checkBirthdays } from './services/birthdayService.js';
 import { checkGiveaways } from './services/giveawayService.js';
 import { loadCommands, registerCommands as registerSlashCommands } from './handlers/commandLoader.js';
+import { setupAdminRoutes } from './web/adminRoutes.js';
 
 class SMPManager extends Client {
   constructor() {
@@ -189,6 +190,9 @@ class SMPManager extends Client {
         timestamp: new Date().toISOString()
       });
     });
+
+    setupAdminRoutes(app, this);
+    startupLog('✅ Admin panel mounted at /admin');
 
     const startServer = (port, attempt = 0) => {
       let hasStartedListening = false;

@@ -1,4 +1,4 @@
-import { Events } from 'discord.js';
+import { Events, EmbedBuilder } from 'discord.js';
 import { logger } from '../utils/logger.js';
 import { getLevelingConfig, getUserLevelData } from '../services/leveling.js';
 import { addXp } from '../services/xpSystem.js';
@@ -6,16 +6,29 @@ import { checkRateLimit } from '../utils/rateLimiter.js';
 import * as saveserver from '../commands/Minecraft/saveserver.js';
 import * as loadserver from '../commands/Minecraft/loadserver.js';
 import * as serverstatus from '../commands/Minecraft/serverstatus.js';
+import { readFileSync, existsSync } from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const CUSTOM_COMMANDS_FILE = path.join(__dirname, '../../data/custom-commands.json');
 
 const PREFIX = '!';
 const MESSAGE_XP_RATE_LIMIT_ATTEMPTS = 12;
 const MESSAGE_XP_RATE_LIMIT_WINDOW_MS = 10000;
 
-const PREFIX_COMMANDS = new Map([
+const BUILT_IN_PREFIX_COMMANDS = new Map([
   ['saveserver', saveserver],
   ['loadserver', loadserver],
   ['serverstatus', serverstatus],
 ]);
+
+function loadCustomCommands() {
+  try {
+    if (!existsSync(CUSTOM_COMMANDS_FILE)) return [];
+    return JSON.parse(readFileSync(CUSTOM_COMMANDS_FILE, 'utf8'));
+  } catch { return []; }
+}
 
 export default {
   name: Events.MessageCreate,
@@ -39,13 +52,45 @@ async function handlePrefixCommand(message, client) {
   const args = message.content.slice(PREFIX.length).trim().split(/\s+/);
   const commandName = args.shift().toLowerCase();
 
-  const command = PREFIX_COMMANDS.get(commandName);
-  if (!command) return;
+  const builtIn = BUILT_IN_PREFIX_COMMANDS.get(commandName);
+  if (builtIn) {
+    try {
+      await builtIn.execute(message, args, client);
+    } catch (error) {
+      logger.error(`Error executing prefix command !${commandName}:`, error);
+      await message.reply('❌ An error occurred while running that command.').catch(() => {});
+    }
+    return;
+  }
+
+  const customCommands = loadCustomCommands();
+  const custom = customCommands.find(c => c.name.toLowerCase() === commandName);
+  if (!custom) return;
 
   try {
-    await command.execute(message, args, client);
+    const ownerId = process.env.OWNER_ID || process.env.OWNER_IDS?.split(',')[0];
+    if (custom.ownerOnly && (!ownerId || message.author.id !== ownerId.trim())) {
+      return message.reply('❌ Only the bot owner (**@cryvux**) can use this command.');
+    }
+
+    const replacePlaceholders = (str) =>
+      str.replace(/\{user\}/g, `<@${message.author.id}>`)
+         .replace(/\{server\}/g, message.guild.name)
+         .replace(/\{memberCount\}/g, message.guild.memberCount.toString())
+         .replace(/\{author\}/g, message.author.tag);
+
+    if (custom.useEmbed) {
+      const embed = new EmbedBuilder()
+        .setColor(custom.embedColor || '#5865F2');
+      if (custom.embedTitle) embed.setTitle(replacePlaceholders(custom.embedTitle));
+      if (custom.embedDescription) embed.setDescription(replacePlaceholders(custom.embedDescription));
+      if (custom.embedFooter) embed.setFooter({ text: replacePlaceholders(custom.embedFooter) });
+      await message.reply({ embeds: [embed] });
+    } else {
+      await message.reply(replacePlaceholders(custom.response));
+    }
   } catch (error) {
-    logger.error(`Error executing prefix command !${commandName}:`, error);
+    logger.error(`Error executing custom command !${commandName}:`, error);
     await message.reply('❌ An error occurred while running that command.').catch(() => {});
   }
 }
