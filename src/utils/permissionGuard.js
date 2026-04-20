@@ -12,6 +12,14 @@ import { errorEmbed } from './embeds.js';
 
 
 
+export function isOwner(userId) {
+  const ids = new Set([
+    ...(process.env.OWNER_ID ? [process.env.OWNER_ID.trim()] : []),
+    ...(process.env.OWNER_IDS ? process.env.OWNER_IDS.split(',').map(id => id.trim()).filter(Boolean) : []),
+  ]);
+  return ids.has(String(userId));
+}
+
 export function isAdmin(member) {
   if (!member) return false;
   return member.permissions.has(PermissionFlagsBits.Administrator);
@@ -179,6 +187,7 @@ export function auditPermissionCheck(userId, action, allowed, reason = null) {
 }
 
 export default {
+  isOwner,
   isAdmin,
   isModerator,
   hasPermission,

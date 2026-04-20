@@ -3,7 +3,7 @@ import { createEmbed, errorEmbed, successEmbed, infoEmbed, warningEmbed } from '
 import { logModerationAction } from '../../utils/moderation.js';
 import { logger } from '../../utils/logger.js';
 import { checkRateLimit } from '../../utils/rateLimiter.js';
-
+import { isOwner } from '../../utils/permissionGuard.js';
 import { InteractionHelper } from '../../utils/interactionHelper.js';
 export default {
     data: new SlashCommandBuilder()
@@ -34,7 +34,7 @@ export default {
             return;
         }
 
-        if (!interaction.member.permissions.has(PermissionFlagsBits.KickMembers)) {
+        if (!isOwner(interaction.user.id) && !interaction.member.permissions.has(PermissionFlagsBits.KickMembers)) {
             return await InteractionHelper.safeEditReply(interaction, {
                 embeds: [
                     errorEmbed(

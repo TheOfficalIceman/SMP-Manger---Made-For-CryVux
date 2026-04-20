@@ -1,4 +1,5 @@
 import { logger } from '../../utils/logger.js';
+import { isOwner } from '../../utils/permissionGuard.js';
 
 export const prefixData = {
   name: 'saveserver',
@@ -8,10 +9,8 @@ export const prefixData = {
 };
 
 export async function execute(message, args, client) {
-  const ownerId = process.env.OWNER_ID || process.env.OWNER_IDS?.split(',')[0];
-
-  if (!ownerId || message.author.id !== ownerId.trim()) {
-    return message.reply('❌ Only the bot owner (**@cryvux**) can use this command.');
+  if (!isOwner(message.author.id)) {
+    return message.reply('❌ Only the bot owner can use this command.');
   }
 
   if (!args.length) {

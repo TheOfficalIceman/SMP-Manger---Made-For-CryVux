@@ -3,6 +3,7 @@ import { logger } from '../utils/logger.js';
 import { getLevelingConfig, getUserLevelData } from '../services/leveling.js';
 import { addXp } from '../services/xpSystem.js';
 import { checkRateLimit } from '../utils/rateLimiter.js';
+import { isOwner } from '../utils/permissionGuard.js';
 import * as saveserver from '../commands/Minecraft/saveserver.js';
 import * as loadserver from '../commands/Minecraft/loadserver.js';
 import * as serverstatus from '../commands/Minecraft/serverstatus.js';
@@ -68,9 +69,8 @@ async function handlePrefixCommand(message, client) {
   if (!custom) return;
 
   try {
-    const ownerId = process.env.OWNER_ID || process.env.OWNER_IDS?.split(',')[0];
-    if (custom.ownerOnly && (!ownerId || message.author.id !== ownerId.trim())) {
-      return message.reply('❌ Only the bot owner (**@cryvux**) can use this command.');
+    if (custom.ownerOnly && !isOwner(message.author.id)) {
+      return message.reply('❌ Only the bot owner can use this command.');
     }
 
     const replacePlaceholders = (str) =>
