@@ -65,7 +65,7 @@ async function createCategorySelectMenu() {
     ];
 
     const embed = createEmbed({
-        title: "🤖 TitanBot Help Center",
+        title: "🤖 SMP Manager Help Center",
         description: "Your all-in-one Discord companion for moderation, economy, fun, and server management.\n\nSelect a category below to explore our powerful commands:",
         color: 'primary'
     });
@@ -207,7 +207,7 @@ export const helpBugReportButton = {
             color: 'error'
         });
         bugReportEmbed.setFooter({
-            text: 'TitanBot Bug Reporting System',
+            text: 'SMP Manager Bug Reporting System',
             iconURL: client.user.displayAvatarURL()
         });
         bugReportEmbed.setTimestamp();

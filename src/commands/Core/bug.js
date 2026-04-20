@@ -11,7 +11,7 @@ export default {
         const githubButton = new ButtonBuilder()
             .setLabel('?? Report Bug on GitHub')
             .setStyle(ButtonStyle.Link)
-            .setURL('https://github.com/codebymitch/TitanBot/issues');
+            .setURL('https://github.com/codebymitch/SMP-Manager/issues');
 
         const row = new ActionRowBuilder().addComponents(githubButton);
 

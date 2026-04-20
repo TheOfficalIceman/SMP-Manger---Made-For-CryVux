@@ -458,7 +458,7 @@ async function handleSetFooter(selectInteraction, rootInteraction, state) {
                     .setValue(state.footer?.text || '')
                     .setMaxLength(2048)
                     .setRequired(false)
-                    .setPlaceholder('Built with TitanBot'),
+                    .setPlaceholder('Built with SMP Manager'),
             ),
             new ActionRowBuilder().addComponents(
                 new TextInputBuilder()
