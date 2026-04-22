@@ -82,12 +82,20 @@ class SMPManager extends Client {
       startupLog('Handlers loaded');
       
       startupLog('Logging into Discord...');
-      await this.login(this.config.bot.token);
-      startupLog('Discord login successful');
-      
-      startupLog('Registering slash commands...');
-      await this.registerCommands();
-      startupLog('Slash commands registration complete');
+      try {
+        if (!this.config.bot.token) {
+          throw new Error('DISCORD_TOKEN is not set');
+        }
+        await this.login(this.config.bot.token);
+        startupLog('Discord login successful');
+
+        startupLog('Registering slash commands...');
+        await this.registerCommands();
+        startupLog('Slash commands registration complete');
+      } catch (loginError) {
+        logger.warn(`⚠️  Discord login skipped: ${loginError.message}`);
+        logger.warn('Bot will run in web-only mode. Set DISCORD_TOKEN (and CLIENT_ID/GUILD_ID) and restart to enable Discord features.');
+      }
       
       const databaseMode = dbStatus.isDegraded
         ? 'Optional in-memory mode (data resets after restart)'
