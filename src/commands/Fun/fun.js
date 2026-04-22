@@ -318,6 +318,29 @@ builder.addSubcommandGroup(g => g
     .addStringOption(o => o.setName('text').setDescription('Text').setRequired(true)))
 );
 
+builder.addSubcommandGroup(g => g
+  .setName('admin').setDescription('Whitelist-gated admin tools')
+  .addSubcommand(s => s.setName('setmoney').setDescription('Set a user\'s balance (whitelist only)')
+    .addUserOption(o => o.setName('user').setDescription('Target').setRequired(true))
+    .addIntegerOption(o => o.setName('amount').setDescription('New amount').setRequired(true))
+    .addStringOption(o => o.setName('type').setDescription('wallet or bank').addChoices({ name: 'wallet', value: 'wallet' }, { name: 'bank', value: 'bank' })))
+  .addSubcommand(s => s.setName('whitelist').setDescription('Manage admin whitelist (owners always allowed)')
+    .addStringOption(o => o.setName('action').setDescription('Action').setRequired(true).addChoices({ name: 'add', value: 'add' }, { name: 'remove', value: 'remove' }, { name: 'list', value: 'list' }))
+    .addUserOption(o => o.setName('user').setDescription('Target user (for add/remove)')))
+  .addSubcommand(s => s.setName('previewchat').setDescription('View/send/edit/delete bot DMs with a user (DM only, whitelist)')
+    .addUserOption(o => o.setName('user').setDescription('Target user').setRequired(true))
+    .addStringOption(o => o.setName('action').setDescription('Action').setRequired(true).addChoices({ name: 'view', value: 'view' }, { name: 'send', value: 'send' }, { name: 'edit', value: 'edit' }, { name: 'delete', value: 'delete' }))
+    .addStringOption(o => o.setName('text').setDescription('Message text (send/edit)'))
+    .addStringOption(o => o.setName('message_id').setDescription('Message ID (edit/delete)')))
+);
+
+async function isWhitelisted(client, userId) {
+  const owners = (process.env.OWNER_IDS || process.env.OWNER_ID || '').split(/[,\s]+/).filter(Boolean);
+  if (owners.includes(userId)) return true;
+  const list = await dbGet(client, KEY_GLOBAL('whitelist'), []);
+  return Array.isArray(list) && list.includes(userId);
+}
+
 // =========================================================================
 // EXECUTE
 // =========================================================================
@@ -332,6 +355,7 @@ export default {
       if (group === 'game') return await runGame(interaction, sub, client);
       if (group === 'useful') return await runUseful(interaction, sub, client);
       if (group === 'chaos') return await runChaos(interaction, sub, client);
+      if (group === 'admin') return await runAdmin(interaction, sub, client);
       return interaction.reply({ content: 'Unknown subcommand.', ephemeral: true });
     } catch (err) {
       logger.error(`/fun ${group} ${sub} error:`, err);
@@ -680,5 +704,108 @@ async function runChaos(interaction, sub, client) {
     for (const [a, b] of flips) out = out.replace(new RegExp(`\\b${a}\\b`, 'gi'), b);
     if (out === text) out = `Not ${text}`;
     return interaction.reply(`🔄 **Reversed:** ${out}`);
+  }
+}
+
+// =========================================================================
+// ADMIN HANDLERS (whitelist-gated)
+// =========================================================================
+async function runAdmin(interaction, sub, client) {
+  const uid = interaction.user.id;
+  const allowed = await isWhitelisted(client, uid);
+  if (!allowed) {
+    return interaction.reply({ content: '⛔ Not whitelisted. Ask a bot owner to add you with `/fun admin whitelist action:add`.', ephemeral: true });
+  }
+
+  if (sub === 'setmoney') {
+    const target = interaction.options.getUser('user');
+    const amount = interaction.options.getInteger('amount');
+    const type = interaction.options.getString('type') || 'wallet';
+    try {
+      const eco = await import('../../services/economy.js');
+      const guildId = interaction.guild?.id || '__global__';
+      const data = await eco.getEconomyData(client, guildId, target.id);
+      if (type === 'bank') data.bank = Math.max(0, amount);
+      else data.wallet = Math.max(0, amount);
+      await eco.setEconomyData(client, guildId, target.id, data);
+      logger.warn(`[ADMIN ABUSE] ${interaction.user.tag} set ${target.tag} ${type} = ${amount}`);
+      return interaction.reply({ content: `💸 Set ${target}'s **${type}** to **${amount}**.`, ephemeral: true });
+    } catch (err) {
+      logger.error('setmoney failed:', err);
+      return interaction.reply({ content: `❌ Failed: ${err.message}`, ephemeral: true });
+    }
+  }
+
+  if (sub === 'whitelist') {
+    const action = interaction.options.getString('action');
+    const target = interaction.options.getUser('user');
+    const list = await dbGet(client, KEY_GLOBAL('whitelist'), []);
+    const owners = (process.env.OWNER_IDS || process.env.OWNER_ID || '').split(/[,\s]+/).filter(Boolean);
+    if (action === 'list') {
+      const lines = list.length ? list.map(id => `• <@${id}> (\`${id}\`)`).join('\n') : '*empty*';
+      const ownerLines = owners.length ? owners.map(id => `• <@${id}> (owner, \`${id}\`)`).join('\n') : '*none*';
+      return interaction.reply({ content: `📋 **Whitelist**\n${lines}\n\n**Owners (always allowed):**\n${ownerLines}`, ephemeral: true });
+    }
+    if (!target) return interaction.reply({ content: 'Provide a user.', ephemeral: true });
+    if (action === 'add') {
+      if (list.includes(target.id)) return interaction.reply({ content: 'Already on the whitelist.', ephemeral: true });
+      list.push(target.id);
+      await dbSet(client, KEY_GLOBAL('whitelist'), list);
+      return interaction.reply({ content: `✅ Added ${target} to the whitelist.`, ephemeral: true });
+    }
+    if (action === 'remove') {
+      const next = list.filter(id => id !== target.id);
+      await dbSet(client, KEY_GLOBAL('whitelist'), next);
+      return interaction.reply({ content: `🗑️ Removed ${target} from the whitelist.`, ephemeral: true });
+    }
+  }
+
+  if (sub === 'previewchat') {
+    if (interaction.guild) {
+      return interaction.reply({ content: '⛔ This command only works in a private DM with the bot.', ephemeral: true });
+    }
+    const target = interaction.options.getUser('user');
+    const action = interaction.options.getString('action');
+    const text = interaction.options.getString('text');
+    const mid = interaction.options.getString('message_id');
+    let dm;
+    try { dm = await target.createDM(); }
+    catch { return interaction.reply({ content: `❌ Cannot open DM with ${target} (they may have DMs closed).`, ephemeral: true }); }
+
+    if (action === 'view') {
+      const msgs = await dm.messages.fetch({ limit: 15 }).catch(() => null);
+      if (!msgs || !msgs.size) return interaction.reply({ content: `📭 No DM history with ${target}.`, ephemeral: true });
+      const lines = [...msgs.values()].reverse().map(m => {
+        const who = m.author.id === client.user.id ? '🤖 Bot' : `👤 ${m.author.username}`;
+        const body = (m.content || '*[no text]*').slice(0, 200);
+        return `\`${m.id}\` ${who}: ${body}`;
+      });
+      return interaction.reply({ content: `📜 **DMs with ${target.tag}** (last ${lines.length})\n\n${lines.join('\n')}`.slice(0, 1900), ephemeral: true });
+    }
+    if (action === 'send') {
+      if (!text) return interaction.reply({ content: 'Provide `text`.', ephemeral: true });
+      const sent = await dm.send(text).catch(e => ({ error: e.message }));
+      if (sent.error) return interaction.reply({ content: `❌ Send failed: ${sent.error}`, ephemeral: true });
+      logger.warn(`[PREVIEWCHAT] ${interaction.user.tag} sent to ${target.tag}: ${text.slice(0, 100)}`);
+      return interaction.reply({ content: `✉️ Sent to ${target}. Message ID: \`${sent.id}\``, ephemeral: true });
+    }
+    if (action === 'edit') {
+      if (!mid || !text) return interaction.reply({ content: 'Provide `message_id` and `text`.', ephemeral: true });
+      const msg = await dm.messages.fetch(mid).catch(() => null);
+      if (!msg) return interaction.reply({ content: '❌ Message not found in this DM.', ephemeral: true });
+      if (msg.author.id !== client.user.id) return interaction.reply({ content: '❌ Discord only allows editing the bot\'s own messages. Cannot edit user messages.', ephemeral: true });
+      await msg.edit(text).catch(e => null);
+      logger.warn(`[PREVIEWCHAT] ${interaction.user.tag} edited ${mid} in DM with ${target.tag}`);
+      return interaction.reply({ content: `✏️ Edited message \`${mid}\`.`, ephemeral: true });
+    }
+    if (action === 'delete') {
+      if (!mid) return interaction.reply({ content: 'Provide `message_id`.', ephemeral: true });
+      const msg = await dm.messages.fetch(mid).catch(() => null);
+      if (!msg) return interaction.reply({ content: '❌ Message not found in this DM.', ephemeral: true });
+      if (msg.author.id !== client.user.id) return interaction.reply({ content: '❌ Discord does not allow bots to delete other users\' messages in DMs. Only the bot\'s own messages can be deleted.', ephemeral: true });
+      await msg.delete().catch(() => null);
+      logger.warn(`[PREVIEWCHAT] ${interaction.user.tag} deleted ${mid} in DM with ${target.tag}`);
+      return interaction.reply({ content: `🗑️ Deleted message \`${mid}\`.`, ephemeral: true });
+    }
   }
 }

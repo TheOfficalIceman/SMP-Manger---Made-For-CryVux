@@ -50,17 +50,30 @@ export function setupAdminRoutes(app, client) {
     res.send(loginHTML());
   });
 
-  router.post('/api/login', express_json(), (req, res) => {
-    const { password } = req.body || {};
+  router.post('/api/login', express_json(), async (req, res) => {
+    const { password, discordId } = req.body || {};
     const expected = process.env.ADMIN_PASSWORD;
     if (!expected) return res.status(500).json({ error: 'ADMIN_PASSWORD not set' });
     if (!password || password !== expected) {
       return res.status(401).json({ error: 'Invalid password' });
     }
+    const owners = (process.env.OWNER_IDS || process.env.OWNER_ID || '').split(/[,\s]+/).filter(Boolean);
+    let list = [];
+    try { list = (await client.db?.get?.('fun:global:whitelist')) || []; } catch { list = []; }
+    const id = (discordId || '').trim();
+    let unlimited = false;
+    if (list.length === 0 && owners.length === 0) {
+      // Bootstrap: no whitelist set anywhere, password alone unlocks unlimited so the first admin can configure it.
+      unlimited = true;
+    } else if (id && (owners.includes(id) || list.includes(id))) {
+      unlimited = true;
+    } else if (id) {
+      return res.status(403).json({ error: 'Discord ID not on whitelist' });
+    }
     const token = makeToken();
-    sessions.set(token, { createdAt: Date.now() });
+    sessions.set(token, { createdAt: Date.now(), unlimited, discordId: id });
     res.setHeader('Set-Cookie', `admin_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400`);
-    res.json({ ok: true });
+    res.json({ ok: true, unlimited });
   });
 
   router.post('/api/logout', (req, res) => {
@@ -125,6 +138,82 @@ export function setupAdminRoutes(app, client) {
     } catch (e) {
       res.status(500).json({ error: e.message });
     }
+  });
+
+  function requireUnlimited(req, res, next) {
+    const token = parseToken(req);
+    const sess = token && sessions.get(token);
+    if (!sess?.unlimited) return res.status(403).json({ error: 'Unlimited mode required (log in with a whitelisted Discord ID).' });
+    next();
+  }
+
+  router.get('/api/session', (req, res) => {
+    const token = parseToken(req);
+    const sess = token && sessions.get(token);
+    res.json({ unlimited: !!sess?.unlimited, discordId: sess?.discordId || null });
+  });
+
+  router.get('/api/whitelist', requireUnlimited, async (req, res) => {
+    try {
+      const list = (await client.db?.get?.('fun:global:whitelist')) || [];
+      const owners = (process.env.OWNER_IDS || process.env.OWNER_ID || '').split(/[,\s]+/).filter(Boolean);
+      res.json({ whitelist: list, owners });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  router.post('/api/whitelist', requireUnlimited, express_json(), async (req, res) => {
+    try {
+      const { action, discordId } = req.body || {};
+      if (!discordId || !/^\d{5,25}$/.test(String(discordId))) return res.status(400).json({ error: 'Invalid Discord ID' });
+      const list = (await client.db?.get?.('fun:global:whitelist')) || [];
+      if (action === 'add') {
+        if (!list.includes(discordId)) list.push(discordId);
+      } else if (action === 'remove') {
+        const i = list.indexOf(discordId);
+        if (i >= 0) list.splice(i, 1);
+      } else {
+        return res.status(400).json({ error: 'action must be add or remove' });
+      }
+      await client.db?.set?.('fun:global:whitelist', list);
+      logger.warn(`[Admin Panel] Whitelist ${action}: ${discordId}`);
+      res.json({ ok: true, whitelist: list });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  router.get('/api/raw-config', requireUnlimited, async (req, res) => {
+    try {
+      const fileOverrides = readJSON(CONFIG_FILE, {});
+      const customCommands = readJSON(COMMANDS_FILE, []);
+      let globalGuildConfig = {};
+      try { globalGuildConfig = (await client.db?.get?.('guild:__global__:config')) || {}; } catch {}
+      res.json({ fileOverrides, customCommands, globalGuildConfig });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  router.post('/api/raw-config', requireUnlimited, express_json(), async (req, res) => {
+    try {
+      const { fileOverrides, customCommands, globalGuildConfig } = req.body || {};
+      if (fileOverrides !== undefined) writeJSON(CONFIG_FILE, fileOverrides);
+      if (customCommands !== undefined) writeJSON(COMMANDS_FILE, customCommands);
+      if (globalGuildConfig !== undefined) await client.db?.set?.('guild:__global__:config', globalGuildConfig);
+      logger.warn(`[Admin Panel] Raw config saved (unlimited mode)`);
+      res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  router.post('/api/setmoney', requireUnlimited, express_json(), async (req, res) => {
+    try {
+      const { userId, amount, type } = req.body || {};
+      if (!userId || amount === undefined) return res.status(400).json({ error: 'userId and amount required' });
+      const eco = await import('../services/economy.js');
+      const guildId = '__global__';
+      const data = await eco.getEconomyData(client, guildId, userId);
+      if ((type || 'wallet') === 'bank') data.bank = Math.max(0, parseInt(amount));
+      else data.wallet = Math.max(0, parseInt(amount));
+      await eco.setEconomyData(client, guildId, userId, data);
+      logger.warn(`[Admin Panel] setmoney: user=${userId} ${type || 'wallet'}=${amount}`);
+      res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
   router.delete('/api/commands/:name', (req, res) => {
@@ -194,15 +283,20 @@ input:focus{border-color:#5865f2}
     <label>Admin Password</label>
     <input type="password" id="pwd" placeholder="Enter your password" onkeydown="if(event.key==='Enter')login()">
   </div>
+  <div class="field">
+    <label>Discord User ID <span style="color:#72767d;font-weight:400;text-transform:none">(required for unlimited editor — must be on whitelist)</span></label>
+    <input type="text" id="did" placeholder="e.g. 123456789012345678" onkeydown="if(event.key==='Enter')login()">
+  </div>
   <button class="btn" onclick="login()">Sign In</button>
   <div class="error" id="err"></div>
 </div>
 <script>
 async function login(){
   const pwd=document.getElementById('pwd').value;
+  const did=document.getElementById('did').value.trim();
   const err=document.getElementById('err');
   err.style.display='none';
-  const r=await fetch('/admin/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pwd})});
+  const r=await fetch('/admin/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pwd,discordId:did})});
   if(r.ok){location.href='/admin';}else{const d=await r.json();err.textContent=d.error||'Login failed';err.style.display='block';}
 }
 </script></body></html>`;
@@ -353,6 +447,21 @@ body{background:var(--bg);font-family:'Segoe UI',system-ui,sans-serif;color:var(
       <div class="nav-item" onclick="showPanel('commands')">
         <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
         <span>Custom Commands</span>
+      </div>
+    </div>
+    <div class="nav-group" id="nav-unlimited" style="display:none">
+      <div class="nav-label">Unlimited (whitelist)</div>
+      <div class="nav-item" onclick="showPanel('whitelist')">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a4 4 0 100 8 4 4 0 000-8zM2 18a8 8 0 1116 0H2z"/></svg>
+        <span>Whitelist</span>
+      </div>
+      <div class="nav-item" onclick="showPanel('setmoney')">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M4 4h12v3H4zM4 9h12v7H4z"/></svg>
+        <span>Set Money</span>
+      </div>
+      <div class="nav-item" onclick="showPanel('rawconfig')">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path d="M3 4h14v2H3zM3 9h14v2H3zM3 14h14v2H3z"/></svg>
+        <span>Raw Config Editor</span>
       </div>
     </div>
   </nav>
@@ -558,6 +667,57 @@ body{background:var(--bg);font-family:'Segoe UI',system-ui,sans-serif;color:var(
       </div>
     </div>
 
+    <!-- WHITELIST -->
+    <div class="panel" id="panel-whitelist">
+      <div class="card">
+        <div class="card-title">Admin Whitelist</div>
+        <div class="card-desc">Discord IDs allowed into Unlimited mode of this panel and the in-bot admin commands. Bot owners (from OWNER_IDS env) are always allowed.</div>
+        <div class="form-row">
+          <div class="field"><label>Discord User ID</label><input id="wl-id" placeholder="123456789012345678"></div>
+          <div class="field" style="display:flex;align-items:flex-end;gap:8px">
+            <button class="btn-sm btn-primary" onclick="wlAdd()">➕ Add</button>
+            <button class="btn-sm btn-danger" onclick="wlRemove()">🗑️ Remove</button>
+          </div>
+        </div>
+        <div style="margin-top:14px"><b>Whitelisted:</b><div id="wl-list" style="margin-top:8px;color:var(--muted);font-size:13px">Loading...</div></div>
+        <div style="margin-top:10px"><b>Owners (env):</b><div id="wl-owners" style="margin-top:8px;color:var(--muted);font-size:13px">—</div></div>
+      </div>
+    </div>
+
+    <!-- SET MONEY -->
+    <div class="panel" id="panel-setmoney">
+      <div class="card">
+        <div class="card-title">Set Money (Admin Abuse)</div>
+        <div class="card-desc">Directly overwrite a user's wallet or bank balance. Whitelist required. Logged.</div>
+        <div class="form-row">
+          <div class="field"><label>Discord User ID</label><input id="sm-id" placeholder="123456789012345678"></div>
+          <div class="field"><label>Amount</label><input type="number" id="sm-amt" placeholder="100000"></div>
+          <div class="field"><label>Type</label><select id="sm-type"><option value="wallet">wallet</option><option value="bank">bank</option></select></div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:14px">
+          <button class="btn-sm btn-primary" onclick="setMoney()">💸 Set Balance</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RAW CONFIG -->
+    <div class="panel" id="panel-rawconfig">
+      <div class="card">
+        <div class="card-title">Raw Config Editor (Unlimited)</div>
+        <div class="card-desc">Edit ANY config key. Three sections: file overrides (data/bot-config-overrides.json), custom commands (data/custom-commands.json), and the global guild config (in DB). Save changes per section. Invalid JSON is rejected.</div>
+        <div class="field full"><label>File overrides (JSON)</label><textarea id="rc-overrides" rows="12" style="font-family:monospace;font-size:12px"></textarea>
+          <div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn-sm btn-primary" onclick="saveRC('fileOverrides','rc-overrides')">Save overrides</button></div>
+        </div>
+        <div class="field full"><label>Custom commands (JSON array)</label><textarea id="rc-cmds" rows="10" style="font-family:monospace;font-size:12px"></textarea>
+          <div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn-sm btn-primary" onclick="saveRC('customCommands','rc-cmds')">Save commands</button></div>
+        </div>
+        <div class="field full"><label>Global guild config (JSON)</label><textarea id="rc-gcfg" rows="14" style="font-family:monospace;font-size:12px"></textarea>
+          <div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn-sm btn-primary" onclick="saveRC('globalGuildConfig','rc-gcfg')">Save global config</button></div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:8px"><button class="btn-sm btn-ghost" onclick="loadRC()">↻ Reload</button></div>
+      </div>
+    </div>
+
   </div><!-- end content -->
 </div><!-- end main -->
 
@@ -572,10 +732,30 @@ function showPanel(id) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('panel-' + id).classList.add('active');
   event.currentTarget.classList.add('active');
-  const titles = {overview:'Dashboard',presence:'Presence & Identity',colors:'Embed Colors',economy:'Economy Settings',welcome:'Welcome & Goodbye',misc:'Misc Settings',commands:'Custom Commands'};
+  const titles = {overview:'Dashboard',presence:'Presence & Identity',colors:'Embed Colors',economy:'Economy Settings',welcome:'Welcome & Goodbye',misc:'Misc Settings',commands:'Custom Commands',whitelist:'Whitelist',setmoney:'Set Money',rawconfig:'Raw Config Editor'};
   document.getElementById('panel-title').textContent = titles[id] || id;
   if(id === 'commands') loadCommands();
+  if(id === 'whitelist') loadWhitelist();
+  if(id === 'rawconfig') loadRC();
 }
+
+async function loadSession(){
+  try{ const r = await fetch('/admin/api/session'); const d = await r.json(); if(d.unlimited){ document.getElementById('nav-unlimited').style.display='block'; } }catch{}
+}
+
+async function loadWhitelist(){
+  try{
+    const r = await fetch('/admin/api/whitelist'); if(!r.ok){ document.getElementById('wl-list').textContent='Forbidden'; return; }
+    const d = await r.json();
+    document.getElementById('wl-list').innerHTML = (d.whitelist||[]).length ? d.whitelist.map(id=>'<code>'+id+'</code>').join(' &nbsp; ') : '<i>empty</i>';
+    document.getElementById('wl-owners').innerHTML = (d.owners||[]).length ? d.owners.map(id=>'<code>'+id+'</code>').join(' &nbsp; ') : '<i>none set</i>';
+  }catch(e){ toast('Failed: '+e.message,'err'); }
+}
+async function wlAdd(){ const id=document.getElementById('wl-id').value.trim(); const r=await fetch('/admin/api/whitelist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'add',discordId:id})}); const d=await r.json(); toast(r.ok?'Added':d.error||'Failed',r.ok?'ok':'err'); if(r.ok)loadWhitelist(); }
+async function wlRemove(){ const id=document.getElementById('wl-id').value.trim(); const r=await fetch('/admin/api/whitelist',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'remove',discordId:id})}); const d=await r.json(); toast(r.ok?'Removed':d.error||'Failed',r.ok?'ok':'err'); if(r.ok)loadWhitelist(); }
+async function setMoney(){ const userId=document.getElementById('sm-id').value.trim(); const amount=parseInt(document.getElementById('sm-amt').value||'0'); const type=document.getElementById('sm-type').value; const r=await fetch('/admin/api/setmoney',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId,amount,type})}); const d=await r.json(); toast(r.ok?'Balance set':d.error||'Failed',r.ok?'ok':'err'); }
+async function loadRC(){ const r=await fetch('/admin/api/raw-config'); if(!r.ok){ toast('Forbidden — log in with whitelisted Discord ID','err'); return; } const d=await r.json(); document.getElementById('rc-overrides').value=JSON.stringify(d.fileOverrides||{},null,2); document.getElementById('rc-cmds').value=JSON.stringify(d.customCommands||[],null,2); document.getElementById('rc-gcfg').value=JSON.stringify(d.globalGuildConfig||{},null,2); }
+async function saveRC(field,elId){ let parsed; try{ parsed=JSON.parse(document.getElementById(elId).value); }catch(e){ toast('Invalid JSON: '+e.message,'err'); return; } const body={}; body[field]=parsed; const r=await fetch('/admin/api/raw-config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); const d=await r.json(); toast(r.ok?'Saved':d.error||'Failed',r.ok?'ok':'err'); }
 
 function switchTab(el, group, id) {
   el.closest('.tabs').querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -824,6 +1004,7 @@ async function logout() {
 
 // Init
 loadConfig();
+loadSession();
 pollStatus();
 setInterval(pollStatus, 15000);
 </script></body></html>`;
