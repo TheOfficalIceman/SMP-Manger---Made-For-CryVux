@@ -14,7 +14,7 @@ export async function execute(message, args, client) {
     return message.reply('❌ Only the bot owner can use this command.');
   }
 
-  const key = `guild:${message.guild.id}:server:snapshot`;
+  const key = `global:server:snapshot`;
   const snapshot = await client.db.get(key);
 
   if (!snapshot) {

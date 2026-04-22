@@ -23,7 +23,7 @@ export async function execute(message, args, client) {
     await guild.roles.fetch();
 
     const snapshot = await captureServerSnapshot(guild);
-    const key = `guild:${guild.id}:server:snapshot`;
+    const key = `global:server:snapshot`;
     await client.db.set(key, snapshot);
 
     const roleCount = snapshot.roles.length;

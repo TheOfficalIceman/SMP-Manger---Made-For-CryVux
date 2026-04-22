@@ -257,7 +257,8 @@ export function unwrapReplitData(data) {
     return data;
 }
 
-export const getGuildConfigKey = (guildId) => `guild:${guildId}:config`;
+export const GLOBAL_CONFIG_GUILD_ID = '__global__';
+export const getGuildConfigKey = (_guildId) => `guild:${GLOBAL_CONFIG_GUILD_ID}:config`;
 export const getGuildBirthdaysKey = (guildId) => `guild:${guildId}:birthdays`;
 
 /**
