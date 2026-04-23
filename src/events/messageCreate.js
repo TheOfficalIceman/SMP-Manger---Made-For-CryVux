@@ -37,14 +37,14 @@ export default {
   name: Events.MessageCreate,
   async execute(message, client) {
     try {
-      if (message.author.bot || !message.guild) return;
+      if (message.author.bot) return;
 
       if (message.content.startsWith(PREFIX)) {
         await handlePrefixCommand(message, client);
         return;
       }
 
-      await handleLeveling(message, client);
+      if (message.guild) await handleLeveling(message, client);
     } catch (error) {
       logger.error('Error in messageCreate event:', error);
     }
