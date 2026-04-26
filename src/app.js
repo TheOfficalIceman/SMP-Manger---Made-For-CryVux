@@ -101,7 +101,8 @@ class SMPManager extends Client {
           throw new Error(`DISCORD_TOKEN${this.botLabel === 'SECONDARY' ? '_2' : ''} is not set`);
         }
         await this.login(this.botToken);
-        startupLog(`Discord login successful [${this.botLabel}]`);
+        this.botClientId = this.user?.id || process.env.CLIENT_ID;
+        startupLog(`Discord login successful [${this.botLabel}] (client id: ${this.botClientId || 'unknown'})`);
 
         startupLog('Registering slash commands...');
         await this.registerCommands();
