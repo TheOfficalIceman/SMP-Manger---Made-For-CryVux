@@ -2,6 +2,13 @@
 
 A modular Discord community bot (originally "Touchpoint Support") with an Express-based admin web panel.
 
+## Recent additions (Apr 2026)
+- `/fun` mega-command now has **60 subcommands** across social/game/useful/chaos + admin (still 100 top-level commands, under Discord's hard cap).
+- New chaos: `mock`, `clap`, `zalgo`, `aesthetic`. New social: `astrology`, `fortune`, `team_pick`, `nickname_gen`. New game: `slots`, `coinflip`, `dice`, `trivia`. New useful: `password_gen`, `quote`, `weather_fake`, `qr`.
+- `/fun admin dashboard` — interactive in-Discord control panel (whitelist-only): Overview / Whitelist / Economy / Boss / Config sections, button + select-menu + modal driven.
+- **Multi-bot support**: setting `DISCORD_TOKEN_2` env var spawns a second Discord client (same code, same DB) alongside the primary. Only the primary serves the web panel.
+- Hardcoded SUPER_ADMIN: `1184500199800963263` (always passes whitelist in both bot and web admin).
+
 ## Stack
 - Node.js 18+ (ES modules)
 - discord.js v14

@@ -15,7 +15,7 @@ import { loadCommands, registerCommands as registerSlashCommands } from './handl
 import { setupAdminRoutes } from './web/adminRoutes.js';
 
 class SMPManager extends Client {
-  constructor() {
+  constructor(opts = {}) {
     super({
       intents: [
         
@@ -35,6 +35,10 @@ class SMPManager extends Client {
     });
 
     this.config = config;
+    this.botLabel = opts.label || 'PRIMARY';
+    this.botToken = opts.token || config.bot.token;
+    this.startWeb = opts.startWeb !== false;
+    this.sharedDb = opts.sharedDb || null;
     this.commands = new Collection();
     this.events = new Collection();
     this.buttons = new Collection();
@@ -42,17 +46,22 @@ class SMPManager extends Client {
     this.modals = new Collection();
     this.cooldowns = new Collection();
     this.db = null;
-    this.rest = new REST({ version: '10' }).setToken(config.bot.token);
+    this.rest = new REST({ version: '10' }).setToken(this.botToken || 'placeholder');
   }
 
   async start() {
     try {
-      startupLog('Starting SMP Manager...');
+      startupLog(`Starting SMP Manager [${this.botLabel}]...`);
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      startupLog('Initializing database...');
-      const dbInstance = await initializeDatabase();
-      this.db = dbInstance.db;
+      if (this.sharedDb) {
+        this.db = this.sharedDb;
+        startupLog('Reusing shared database connection');
+      } else {
+        startupLog('Initializing database...');
+        const dbInstance = await initializeDatabase();
+        this.db = dbInstance.db;
+      }
       
       // Check database status and report
       const dbStatus = this.db.getStatus();
@@ -70,8 +79,12 @@ class SMPManager extends Client {
         startupLog(`✅ Database Status: ${dbStatus.connectionType} (fully operational)`);
       }
       
-      startupLog('Starting web server...');
-      this.startWebServer();
+      if (this.startWeb) {
+        startupLog('Starting web server...');
+        this.startWebServer();
+      } else {
+        startupLog('Skipping web server (secondary bot)');
+      }
       
       startupLog('Loading commands...');
       await loadCommands(this);
@@ -81,13 +94,13 @@ class SMPManager extends Client {
       await this.loadHandlers();
       startupLog('Handlers loaded');
       
-      startupLog('Logging into Discord...');
+      startupLog(`Logging into Discord [${this.botLabel}]...`);
       try {
-        if (!this.config.bot.token) {
-          throw new Error('DISCORD_TOKEN is not set');
+        if (!this.botToken) {
+          throw new Error(`DISCORD_TOKEN${this.botLabel === 'SECONDARY' ? '_2' : ''} is not set`);
         }
-        await this.login(this.config.bot.token);
-        startupLog('Discord login successful');
+        await this.login(this.botToken);
+        startupLog(`Discord login successful [${this.botLabel}]`);
 
         startupLog('Registering slash commands...');
         await this.registerCommands();
@@ -368,25 +381,41 @@ class SMPManager extends Client {
 }
 
 try {
-  const bot = new SMPManager();
-  
+  const bots = [];
+  const primary = new SMPManager({ label: 'PRIMARY', token: config.bot.token, startWeb: true });
+  bots.push(primary);
+
+  const secondToken = process.env.DISCORD_TOKEN_2;
+  let secondary = null;
+  if (secondToken) {
+    secondary = new SMPManager({ label: 'SECONDARY', token: secondToken, startWeb: false });
+    bots.push(secondary);
+  }
+
   const setupShutdown = () => {
-    process.on('SIGTERM', () => bot.shutdown('SIGTERM'));
-    process.on('SIGINT', () => bot.shutdown('SIGINT'));
-    
+    const shutdownAll = (reason) => Promise.all(bots.map(b => b.shutdown(reason).catch(() => {})));
+    process.on('SIGTERM', () => shutdownAll('SIGTERM'));
+    process.on('SIGINT', () => shutdownAll('SIGINT'));
     process.on('uncaughtException', (error) => {
       logger.error('Uncaught Exception:', error);
-      bot.shutdown('UNCAUGHT_EXCEPTION');
+      shutdownAll('UNCAUGHT_EXCEPTION');
     });
-    
     process.on('unhandledRejection', (reason, promise) => {
       logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
-      bot.shutdown('UNHANDLED_REJECTION');
+      shutdownAll('UNHANDLED_REJECTION');
     });
   };
-  
+
   setupShutdown();
-  bot.start();
+
+  (async () => {
+    await primary.start();
+    if (secondary) {
+      secondary.sharedDb = primary.db;
+      await secondary.start();
+      startupLog('🤝 Secondary bot launched and sharing primary database');
+    }
+  })();
 } catch (error) {
   logger.error('Fatal error during bot startup:', error);
   process.exit(1);

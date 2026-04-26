@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
 import { logger } from '../../utils/logger.js';
 
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
@@ -203,6 +203,43 @@ const HISTORY_REWRITES = [
   "{event}, but it was sponsored by a soda company.",
   "{event}, however the real cause was a missing TV remote."
 ];
+// =========================================================================
+// EXTRA POOLS (new commands)
+// =========================================================================
+const ZODIAC = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+const HOROSCOPES = ['Today the universe owes you nothing — collect anyway.', 'A small inconvenience will spiral into a story you tell at parties.', 'Avoid texting your ex; they have not, in fact, changed.', 'Lucky number: whatever the WiFi password ends in.', 'You will say "real quick" and it will not be quick.'];
+const FORTUNES = ['💰 Money will find you, but only after you stop checking the mailbox.', '🍀 Lucky day. Buy a scratch ticket and immediately lose it.', '⚠️ Avoid stairs today. Trust me.', '🌟 A stranger will compliment your hair. Lie and say "thanks, I cut it myself."', '🎯 You will succeed at one (1) thing today. Pick wisely.'];
+const NICK_PARTS_A = ['Captain','Lord','DJ','Big','Dr','Sir','Ace','Lil','King','Queen','Sergeant'];
+const NICK_PARTS_B = ['Spaghetti','Vibe','Doomscroll','Chaos','Pixel','Banana','Ghost','Snek','Blunder','Echo','Crunch'];
+const NICK_PARTS_C = ['the Untamed','Junior','XL','69','-Bot','of the North','42','XL','Prime','Deluxe','Ultra'];
+const TRIVIA = [
+  { q: 'How many bones are in the adult human body?', choices: ['206','201','212','198'], a: 0 },
+  { q: 'What is the smallest country in the world?', choices: ['Monaco','Vatican City','Nauru','San Marino'], a: 1 },
+  { q: 'Which planet has the most moons?', choices: ['Jupiter','Saturn','Uranus','Neptune'], a: 1 },
+  { q: 'What year did Minecraft 1.0 release?', choices: ['2009','2010','2011','2012'], a: 2 },
+  { q: 'What gas do plants absorb from the atmosphere?', choices: ['Oxygen','Nitrogen','CO2','Methane'], a: 2 }
+];
+const SLOTS_REELS = ['🍒','🍋','🍇','⭐','💎','7️⃣'];
+const QUOTES = [
+  '“The only way to do great work is to love what you do.” — Steve Jobs',
+  '“Whether you think you can, or you think you can\'t — you\'re right.” — Henry Ford',
+  '“The best time to plant a tree was 20 years ago. The second best time is now.” — Proverb',
+  '“Comparison is the thief of joy.” — Theodore Roosevelt',
+  '“Discipline equals freedom.” — Jocko Willink'
+];
+const FAKE_WEATHER = ['☀️ Sunny with a 100% chance of regret', '⛈️ Storms followed by mild personal growth', '🌫️ Foggy. Bring a flashlight and a friend you trust.', '❄️ Snow flurries of unread emails', '🔥 Heat warning. Cancel everything.'];
+function spongeMock(text) { return [...text].map((c, i) => i % 2 ? c.toLowerCase() : c.toUpperCase()).join(''); }
+function clapText(text) { return text.split(/\s+/).filter(Boolean).join(' 👏 '); }
+function zalgo(text, intensity = 5) {
+  const marks = ['̃','̄','̅','̆','̇','̈','̉','̊','̋','̌','̍','̎','̏','̐','̑','̒','̓','̔','̕','̖','̗','̘','̙','̚','̛','̜','̝','̞','̟','̠','̡','̢','̣','̤','̥','̦','̧','̨','̩','̪','̫','̬','̭','̮','̯','̰','̱','̲','̳','̴','̵','̶','̷','̸'];
+  return [...text].map(c => c + Array.from({ length: intensity }, () => marks[Math.floor(Math.random() * marks.length)]).join('')).join('');
+}
+function fullwidth(text) { return [...text].map(c => { const code = c.charCodeAt(0); if (code >= 33 && code <= 126) return String.fromCharCode(code + 0xFEE0); if (c === ' ') return '　'; return c; }).join(''); }
+function genPassword(len = 16) {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+';
+  let out = ''; for (let i = 0; i < len; i++) out += chars[Math.floor(Math.random() * chars.length)]; return out;
+}
+
 function emojiTranslate(text, density = 0.3) {
   const map = { love: '❤️', heart: '❤️', happy: '😄', sad: '😢', fire: '🔥', cool: '😎', star: '⭐', sun: '☀️', moon: '🌙', music: '🎵', cat: '🐱', dog: '🐶', food: '🍔', pizza: '🍕', game: '🎮', code: '💻', book: '📚', money: '💰', time: '⏰', sleep: '😴' };
   let out = text;
@@ -246,6 +283,14 @@ builder.addSubcommandGroup(g => g
   .addSubcommand(s => s.setName('who_sus').setDescription('Pick a random "suspicious" member'))
   .addSubcommand(s => s.setName('server_story').setDescription('Generate a story about the server')
     .addStringOption(o => o.setName('genre').setDescription('Genre').addChoices({ name: 'fantasy', value: 'fantasy' }, { name: 'scifi', value: 'scifi' }, { name: 'horror', value: 'horror' })))
+  .addSubcommand(s => s.setName('astrology').setDescription('Daily horoscope for a user')
+    .addUserOption(o => o.setName('user').setDescription('Target user'))
+    .addStringOption(o => o.setName('sign').setDescription('Zodiac sign').addChoices(...ZODIAC.map(z => ({ name: z, value: z })))))
+  .addSubcommand(s => s.setName('fortune').setDescription('Random good or bad fortune'))
+  .addSubcommand(s => s.setName('team_pick').setDescription('Split mentioned users into two teams')
+    .addStringOption(o => o.setName('users').setDescription('Mention 2+ users').setRequired(true)))
+  .addSubcommand(s => s.setName('nickname_gen').setDescription('Generate a silly nickname for a user')
+    .addUserOption(o => o.setName('user').setDescription('Target').setRequired(true)))
 );
 
 builder.addSubcommandGroup(g => g
@@ -263,6 +308,14 @@ builder.addSubcommandGroup(g => g
   .addSubcommand(s => s.setName('lootbox').setDescription('Open a random lootbox'))
   .addSubcommand(s => s.setName('xp').setDescription('Show your fun XP'))
   .addSubcommand(s => s.setName('level_rewards').setDescription('See unlockable level perks'))
+  .addSubcommand(s => s.setName('slots').setDescription('Spin the slot machine')
+    .addIntegerOption(o => o.setName('bet').setDescription('Bet amount (fun XP)')))
+  .addSubcommand(s => s.setName('coinflip').setDescription('Flip a coin')
+    .addStringOption(o => o.setName('call').setDescription('heads or tails').addChoices({ name: 'heads', value: 'heads' }, { name: 'tails', value: 'tails' })))
+  .addSubcommand(s => s.setName('dice').setDescription('Roll dice')
+    .addIntegerOption(o => o.setName('count').setDescription('How many dice (1-10)'))
+    .addIntegerOption(o => o.setName('sides').setDescription('Sides per die (2-100)')))
+  .addSubcommand(s => s.setName('trivia').setDescription('Random trivia question'))
 );
 
 builder.addSubcommandGroup(g => g
@@ -289,6 +342,13 @@ builder.addSubcommandGroup(g => g
     .addStringOption(o => o.setName('when').setDescription('When (free text)').setRequired(true)))
   .addSubcommand(s => s.setName('focus_mode').setDescription('Start a personal focus session')
     .addIntegerOption(o => o.setName('minutes').setDescription('Duration').setRequired(true)))
+  .addSubcommand(s => s.setName('password_gen').setDescription('Generate a strong password (sent ephemerally)')
+    .addIntegerOption(o => o.setName('length').setDescription('Length 8-64')))
+  .addSubcommand(s => s.setName('quote').setDescription('Inspirational quote'))
+  .addSubcommand(s => s.setName('weather_fake').setDescription('Fake weather forecast for a place')
+    .addStringOption(o => o.setName('place').setDescription('City or place').setRequired(true)))
+  .addSubcommand(s => s.setName('qr').setDescription('Generate a QR code image for text')
+    .addStringOption(o => o.setName('text').setDescription('Text or URL').setRequired(true)))
 );
 
 builder.addSubcommandGroup(g => g
@@ -316,6 +376,15 @@ builder.addSubcommandGroup(g => g
     .addIntegerOption(o => o.setName('density').setDescription('1-10')))
   .addSubcommand(s => s.setName('reverse_meaning').setDescription('Flip the meaning of text')
     .addStringOption(o => o.setName('text').setDescription('Text').setRequired(true)))
+  .addSubcommand(s => s.setName('mock').setDescription('SpOnGeBoB MoCk a piece of text')
+    .addStringOption(o => o.setName('text').setDescription('Text').setRequired(true)))
+  .addSubcommand(s => s.setName('clap').setDescription('👏 Clap 👏 between 👏 every 👏 word')
+    .addStringOption(o => o.setName('text').setDescription('Text').setRequired(true)))
+  .addSubcommand(s => s.setName('zalgo').setDescription('Heavy zalgo cursed text')
+    .addStringOption(o => o.setName('text').setDescription('Text').setRequired(true))
+    .addIntegerOption(o => o.setName('intensity').setDescription('1-15')))
+  .addSubcommand(s => s.setName('aesthetic').setDescription('ｆｕｌｌｗｉｄｔｈ aesthetic text')
+    .addStringOption(o => o.setName('text').setDescription('Text').setRequired(true)))
 );
 
 builder.addSubcommandGroup(g => g
@@ -327,7 +396,8 @@ builder.addSubcommandGroup(g => g
   .addSubcommand(s => s.setName('whitelist').setDescription('Manage admin whitelist (owners always allowed)')
     .addStringOption(o => o.setName('action').setDescription('Action').setRequired(true).addChoices({ name: 'add', value: 'add' }, { name: 'remove', value: 'remove' }, { name: 'list', value: 'list' }))
     .addUserOption(o => o.setName('user').setDescription('Target user (for add/remove)')))
-  .addSubcommand(s => s.setName('previewchat').setDescription('View/send/edit/delete bot DMs with a user (DM only, whitelist)')
+  .addSubcommand(s => s.setName('dashboard').setDescription('Open the in-Discord control dashboard (whitelist)'))
+  .addSubcommand(s => s.setName('previewchat').setDescription('View/send/edit/delete bot DMs with a user (whitelist)')
     .addUserOption(o => o.setName('user').setDescription('Target user').setRequired(true))
     .addStringOption(o => o.setName('action').setDescription('Action').setRequired(true).addChoices({ name: 'view', value: 'view' }, { name: 'send', value: 'send' }, { name: 'edit', value: 'edit' }, { name: 'delete', value: 'delete' }))
     .addStringOption(o => o.setName('text').setDescription('Message text (send/edit)'))
@@ -441,6 +511,28 @@ async function runSocial(interaction, sub, client) {
     const beats = shuffle([...elems]).slice(0, 4).map(e => e.replace('{server}', serverName));
     return interaction.reply(`📖 **Story of ${serverName}** (${genre})\n\nIt began in ${beats[0]}. The community discovered ${beats[1]}, and despite ${beats[2]}, they emerged stronger because of ${beats[3]}.`);
   }
+  if (sub === 'astrology') {
+    const u = interaction.options.getUser('user') || interaction.user;
+    const sign = interaction.options.getString('sign') || ZODIAC[Math.abs([...u.id].reduce((a, c) => a + c.charCodeAt(0), 0)) % ZODIAC.length];
+    return interaction.reply(`🔮 **${u.username}** — ${sign}\n${pick(HOROSCOPES)}\nLucky number: **${rand(1, 99)}**`);
+  }
+  if (sub === 'fortune') {
+    return interaction.reply(`🥠 **Fortune for ${interaction.user}:**\n${pick(FORTUNES)}`);
+  }
+  if (sub === 'team_pick') {
+    const ids = [...interaction.options.getString('users').matchAll(/<@!?(\d+)>/g)].map(m => m[1]);
+    if (ids.length < 2) return interaction.reply({ content: 'Mention at least 2 users.', ephemeral: true });
+    const sh = shuffle(ids);
+    const half = Math.ceil(sh.length / 2);
+    const a = sh.slice(0, half).map(id => `<@${id}>`).join(', ');
+    const b = sh.slice(half).map(id => `<@${id}>`).join(', ') || '*(odd one out)*';
+    return interaction.reply(`🏆 **Team Pick**\n🔴 **Red Team:** ${a}\n🔵 **Blue Team:** ${b}`);
+  }
+  if (sub === 'nickname_gen') {
+    const u = interaction.options.getUser('user');
+    const nick = `${pick(NICK_PARTS_A)} ${pick(NICK_PARTS_B)} ${pick(NICK_PARTS_C)}`;
+    return interaction.reply(`🪪 ${u}'s new nickname: **${nick}**`);
+  }
 }
 
 // =========================================================================
@@ -540,6 +632,51 @@ async function runGame(interaction, sub, client) {
   }
   if (sub === 'level_rewards') {
     return interaction.reply(`🎖️ **Level Rewards (fun)**\n• L5 — title: Adventurer\n• L10 — heist payout +20%\n• L15 — title: Veteran\n• L20 — extra lootbox roll\n• L25 — title: Legend\n• L50 — bragging rights, eternal`);
+  }
+  if (sub === 'slots') {
+    const bet = Math.max(0, interaction.options.getInteger('bet') || 0);
+    const xp = await dbGet(client, KEY_USER(uid, 'xp'), 0);
+    if (bet > xp) return interaction.reply({ content: `❌ You only have ${xp} fun XP.`, ephemeral: true });
+    const r = [pick(SLOTS_REELS), pick(SLOTS_REELS), pick(SLOTS_REELS)];
+    let payout = 0, msg = '';
+    if (r[0] === r[1] && r[1] === r[2]) { payout = bet * 5; msg = '🎉 **JACKPOT!** ×5'; }
+    else if (r[0] === r[1] || r[1] === r[2] || r[0] === r[2]) { payout = bet * 2; msg = '✨ **Pair!** ×2'; }
+    else { payout = -bet; msg = '💸 No luck.'; }
+    await dbSet(client, KEY_USER(uid, 'xp'), Math.max(0, xp + payout));
+    return interaction.reply(`🎰 [ ${r.join(' | ')} ]\n${msg}\nBalance: **${Math.max(0, xp + payout)}** fun XP`);
+  }
+  if (sub === 'coinflip') {
+    const call = interaction.options.getString('call');
+    const result = chance(0.5) ? 'heads' : 'tails';
+    const won = call ? call === result : null;
+    return interaction.reply(`🪙 **${result.toUpperCase()}**${won === null ? '' : won ? ' — you won!' : ' — you lost.'}`);
+  }
+  if (sub === 'dice') {
+    const count = Math.max(1, Math.min(10, interaction.options.getInteger('count') || 1));
+    const sides = Math.max(2, Math.min(100, interaction.options.getInteger('sides') || 6));
+    const rolls = Array.from({ length: count }, () => rand(1, sides));
+    const total = rolls.reduce((a, b) => a + b, 0);
+    return interaction.reply(`🎲 Rolled ${count}d${sides}: [${rolls.join(', ')}]\n**Total:** ${total}`);
+  }
+  if (sub === 'trivia') {
+    const t = pick(TRIVIA);
+    const row = new ActionRowBuilder().addComponents(
+      ...t.choices.map((c, i) => new ButtonBuilder().setCustomId(`fun_trivia_${i}`).setLabel(c).setStyle(ButtonStyle.Primary))
+    );
+    const msg = await interaction.reply({ content: `🧠 **${t.q}**`, components: [row], fetchReply: true });
+    try {
+      const choice = await msg.awaitMessageComponent({ filter: i => i.user.id === uid, time: 20000 });
+      const idx = parseInt(choice.customId.split('_').pop());
+      const correct = idx === t.a;
+      if (correct) {
+        const x = await dbGet(client, KEY_USER(uid, 'xp'), 0);
+        await dbSet(client, KEY_USER(uid, 'xp'), x + 10);
+      }
+      await choice.update({ content: `🧠 **${t.q}**\nYou picked: **${t.choices[idx]}**\n${correct ? '✅ Correct! +10 XP' : `❌ Wrong. Answer: **${t.choices[t.a]}**`}`, components: [] });
+    } catch {
+      await interaction.editReply({ content: `🧠 **${t.q}**\n*Time's up. Answer was ${t.choices[t.a]}*`, components: [] }).catch(() => {});
+    }
+    return;
   }
 }
 
@@ -651,6 +788,23 @@ async function runUseful(interaction, sub, client) {
     }, min * 60000);
     return interaction.reply({ content: `🎯 Focus mode on for ${min} min. I'll DM you when done.`, ephemeral: true });
   }
+  if (sub === 'password_gen') {
+    const len = Math.max(8, Math.min(64, interaction.options.getInteger('length') || 16));
+    return interaction.reply({ content: `🔐 **Generated password (${len} chars):**\n\`\`\`\n${genPassword(len)}\n\`\`\``, ephemeral: true });
+  }
+  if (sub === 'quote') {
+    return interaction.reply(`💭 ${pick(QUOTES)}`);
+  }
+  if (sub === 'weather_fake') {
+    const place = interaction.options.getString('place');
+    return interaction.reply(`🌦️ **Fake forecast for ${place}:**\n${pick(FAKE_WEATHER)}\nTemp: **${rand(-10, 40)}°C** • Humidity: **${rand(20, 95)}%**`);
+  }
+  if (sub === 'qr') {
+    const text = interaction.options.getString('text').slice(0, 500);
+    const url = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(text)}`;
+    const e = new EmbedBuilder().setTitle('📱 QR Code').setDescription(`\`${text}\``).setImage(url).setColor('#5865F2');
+    return interaction.reply({ embeds: [e] });
+  }
 }
 
 // =========================================================================
@@ -707,6 +861,19 @@ async function runChaos(interaction, sub, client) {
     if (out === text) out = `Not ${text}`;
     return interaction.reply(`🔄 **Reversed:** ${out}`);
   }
+  if (sub === 'mock') {
+    return interaction.reply(spongeMock(interaction.options.getString('text')).slice(0, 1900));
+  }
+  if (sub === 'clap') {
+    return interaction.reply(clapText(interaction.options.getString('text')).slice(0, 1900));
+  }
+  if (sub === 'zalgo') {
+    const intensity = Math.max(1, Math.min(15, interaction.options.getInteger('intensity') || 5));
+    return interaction.reply(zalgo(interaction.options.getString('text'), intensity).slice(0, 1900));
+  }
+  if (sub === 'aesthetic') {
+    return interaction.reply(fullwidth(interaction.options.getString('text')).slice(0, 1900));
+  }
 }
 
 // =========================================================================
@@ -762,6 +929,10 @@ async function runAdmin(interaction, sub, client) {
     }
   }
 
+  if (sub === 'dashboard') {
+    return openDashboard(interaction, client);
+  }
+
   if (sub === 'previewchat') {
     const target = interaction.options.getUser('user');
     const action = interaction.options.getString('action');
@@ -807,4 +978,153 @@ async function runAdmin(interaction, sub, client) {
       return interaction.reply({ content: `🗑️ Deleted message \`${mid}\`.`, ephemeral: true });
     }
   }
+}
+
+// =========================================================================
+// IN-DISCORD DASHBOARD (whitelist-gated, button + select + modal driven)
+// =========================================================================
+async function buildDashboardPayload(client, page = 'home') {
+  const dbStatus = client.db?.getStatus?.() || { connectionType: 'unknown', isDegraded: true };
+  const wl = await dbGet(client, KEY_GLOBAL('whitelist'), []);
+  const boss = await dbGet(client, KEY_GLOBAL('boss'));
+  const guildCount = client.guilds?.cache?.size || 0;
+  const cmdCount = client.commands?.size || 0;
+
+  const embed = new EmbedBuilder().setColor('#5865F2').setTimestamp();
+
+  if (page === 'home') {
+    embed.setTitle('🎛️ SMP Manager — Control Dashboard')
+      .setDescription('Whitelist-only control panel. Use the menu below to navigate sections.')
+      .addFields(
+        { name: 'Bot', value: `**${client.user?.tag || 'offline'}**\n${guildCount} servers`, inline: true },
+        { name: 'Commands', value: `**${cmdCount}** loaded`, inline: true },
+        { name: 'Database', value: `${dbStatus.isDegraded ? '⚠️ Degraded' : '✅ Connected'}\n${dbStatus.connectionType}`, inline: true },
+        { name: 'Whitelist', value: `${wl.length} user(s)`, inline: true },
+        { name: 'Active Boss', value: boss ? `${boss.name} (${boss.hp}/${boss.maxHp})` : '*none*', inline: true },
+        { name: 'Web Panel', value: `\`/admin\` (password‑gated)`, inline: true }
+      )
+      .setFooter({ text: 'Click buttons or pick a section below' });
+  } else if (page === 'whitelist') {
+    embed.setTitle('🎛️ Dashboard — Whitelist').setDescription(wl.length ? wl.map(id => `• <@${id}> (\`${id}\`)`).join('\n') : '*Empty whitelist.*');
+  } else if (page === 'economy') {
+    embed.setTitle('🎛️ Dashboard — Economy').setDescription('Use **Set Money** to grant a balance.\nUse `/fun admin setmoney` for the slash version.');
+  } else if (page === 'boss') {
+    embed.setTitle('🎛️ Dashboard — Global Boss').setDescription(boss ? `**${boss.name}**\nHP: ${boss.hp}/${boss.maxHp}\nStarted <t:${Math.floor(boss.started/1000)}:R>` : '*No active boss. Anyone using `/fun game bossfight` spawns one.*');
+  } else if (page === 'config') {
+    const overrides = await dbGet(client, KEY_GLOBAL('config'), {});
+    const keys = Object.keys(overrides);
+    embed.setTitle('🎛️ Dashboard — Global Config').setDescription(keys.length ? `**${keys.length} override(s):**\n\`\`\`\n${keys.slice(0, 20).join('\n')}\n\`\`\`` : '*No global config overrides set yet.*');
+  }
+
+  const select = new StringSelectMenuBuilder()
+    .setCustomId('dash_nav')
+    .setPlaceholder('Jump to section…')
+    .addOptions(
+      { label: 'Overview', value: 'home', emoji: '🏠', default: page === 'home' },
+      { label: 'Whitelist', value: 'whitelist', emoji: '🛡️', default: page === 'whitelist' },
+      { label: 'Economy', value: 'economy', emoji: '💰', default: page === 'economy' },
+      { label: 'Global Boss', value: 'boss', emoji: '🐉', default: page === 'boss' },
+      { label: 'Global Config', value: 'config', emoji: '⚙️', default: page === 'config' }
+    );
+
+  const row1 = new ActionRowBuilder().addComponents(select);
+  const row2 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder().setCustomId('dash_wl_add').setLabel('Add Whitelist').setEmoji('➕').setStyle(ButtonStyle.Success),
+    new ButtonBuilder().setCustomId('dash_wl_remove').setLabel('Remove').setEmoji('➖').setStyle(ButtonStyle.Danger),
+    new ButtonBuilder().setCustomId('dash_set_money').setLabel('Set Money').setEmoji('💸').setStyle(ButtonStyle.Primary),
+    new ButtonBuilder().setCustomId('dash_kill_boss').setLabel('Kill Boss').setEmoji('💀').setStyle(ButtonStyle.Secondary),
+    new ButtonBuilder().setCustomId('dash_refresh').setLabel('Refresh').setEmoji('🔄').setStyle(ButtonStyle.Secondary)
+  );
+
+  return { embeds: [embed], components: [row1, row2], ephemeral: true };
+}
+
+async function openDashboard(interaction, client) {
+  const payload = await buildDashboardPayload(client, 'home');
+  const msg = await interaction.reply({ ...payload, fetchReply: true });
+
+  const collector = msg.createMessageComponentCollector({
+    filter: i => i.user.id === interaction.user.id,
+    time: 5 * 60 * 1000
+  });
+
+  collector.on('collect', async (i) => {
+    try {
+      if (!(await isWhitelisted(client, i.user.id))) {
+        return i.reply({ content: '⛔ Not whitelisted.', ephemeral: true });
+      }
+
+      if (i.isStringSelectMenu() && i.customId === 'dash_nav') {
+        const page = i.values[0];
+        const next = await buildDashboardPayload(client, page);
+        return i.update({ embeds: next.embeds, components: next.components });
+      }
+
+      if (i.isButton()) {
+        if (i.customId === 'dash_refresh') {
+          const next = await buildDashboardPayload(client, 'home');
+          return i.update({ embeds: next.embeds, components: next.components });
+        }
+        if (i.customId === 'dash_kill_boss') {
+          await dbSet(client, KEY_GLOBAL('boss'), null);
+          const next = await buildDashboardPayload(client, 'boss');
+          return i.update({ embeds: next.embeds, components: next.components });
+        }
+        if (i.customId === 'dash_wl_add' || i.customId === 'dash_wl_remove') {
+          const isAdd = i.customId === 'dash_wl_add';
+          const modalId = `dash_modal_wl_${isAdd ? 'add' : 'remove'}_${Date.now()}`;
+          const modal = new ModalBuilder().setCustomId(modalId).setTitle(isAdd ? 'Add to Whitelist' : 'Remove from Whitelist')
+            .addComponents(new ActionRowBuilder().addComponents(
+              new TextInputBuilder().setCustomId('uid').setLabel('Discord User ID').setStyle(TextInputStyle.Short).setRequired(true).setMinLength(15).setMaxLength(25)
+            ));
+          await i.showModal(modal);
+          try {
+            const sub = await i.awaitModalSubmit({ filter: m => m.customId === modalId && m.user.id === i.user.id, time: 60000 });
+            const uid = sub.fields.getTextInputValue('uid').trim();
+            const list = await dbGet(client, KEY_GLOBAL('whitelist'), []);
+            let next = list;
+            if (isAdd && !list.includes(uid)) next = [...list, uid];
+            if (!isAdd) next = list.filter(x => x !== uid);
+            await dbSet(client, KEY_GLOBAL('whitelist'), next);
+            await sub.reply({ content: `${isAdd ? '✅ Added' : '🗑️ Removed'} \`${uid}\`. Whitelist now has ${next.length} user(s).`, ephemeral: true });
+            const refreshed = await buildDashboardPayload(client, 'whitelist');
+            await msg.edit({ embeds: refreshed.embeds, components: refreshed.components }).catch(() => {});
+          } catch { /* timeout */ }
+          return;
+        }
+        if (i.customId === 'dash_set_money') {
+          const modalId = `dash_modal_money_${Date.now()}`;
+          const modal = new ModalBuilder().setCustomId(modalId).setTitle('Set Money')
+            .addComponents(
+              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('uid').setLabel('Discord User ID').setStyle(TextInputStyle.Short).setRequired(true)),
+              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('amount').setLabel('New Amount').setStyle(TextInputStyle.Short).setRequired(true)),
+              new ActionRowBuilder().addComponents(new TextInputBuilder().setCustomId('type').setLabel('wallet or bank (default: wallet)').setStyle(TextInputStyle.Short).setRequired(false))
+            );
+          await i.showModal(modal);
+          try {
+            const sub = await i.awaitModalSubmit({ filter: m => m.customId === modalId && m.user.id === i.user.id, time: 60000 });
+            const uid = sub.fields.getTextInputValue('uid').trim();
+            const amount = parseInt(sub.fields.getTextInputValue('amount').trim(), 10);
+            const type = (sub.fields.getTextInputValue('type') || 'wallet').trim().toLowerCase() === 'bank' ? 'bank' : 'wallet';
+            if (!uid || !Number.isFinite(amount)) return sub.reply({ content: '❌ Invalid input.', ephemeral: true });
+            const eco = await import('../../services/economy.js');
+            const guildId = sub.guild?.id || '__global__';
+            const data = await eco.getEconomyData(client, guildId, uid);
+            data[type] = Math.max(0, amount);
+            await eco.setEconomyData(client, guildId, uid, data);
+            logger.warn(`[DASHBOARD] ${sub.user.tag} set ${uid} ${type}=${amount}`);
+            await sub.reply({ content: `💸 Set <@${uid}> **${type}** to **${amount}**.`, ephemeral: true });
+          } catch { /* timeout */ }
+          return;
+        }
+      }
+    } catch (err) {
+      logger.error('Dashboard interaction error:', err);
+      if (!i.replied && !i.deferred) await i.reply({ content: `❌ ${err.message}`, ephemeral: true }).catch(() => {});
+    }
+  });
+
+  collector.on('end', () => {
+    interaction.editReply({ components: [] }).catch(() => {});
+  });
 }
