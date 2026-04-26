@@ -38,6 +38,7 @@ class SMPManager extends Client {
     this.botLabel = opts.label || 'PRIMARY';
     this.botToken = opts.token || config.bot.token;
     this.botGuildId = opts.guildId || config.bot.guildId;
+    this.botClientId = opts.clientId || config.bot.clientId;
     this.startWeb = opts.startWeb !== false;
     this.sharedDb = opts.sharedDb || null;
     this.commands = new Collection();
@@ -101,7 +102,7 @@ class SMPManager extends Client {
           throw new Error(`DISCORD_TOKEN${this.botLabel === 'SECONDARY' ? '_2' : ''} is not set`);
         }
         await this.login(this.botToken);
-        this.botClientId = this.user?.id || process.env.CLIENT_ID;
+        if (!this.botClientId) this.botClientId = this.user?.id;
         startupLog(`Discord login successful [${this.botLabel}] (client id: ${this.botClientId || 'unknown'})`);
 
         startupLog('Registering slash commands...');
@@ -388,10 +389,11 @@ try {
   bots.push(primary);
 
   const secondToken = process.env.DISCORD_TOKEN_2;
+  const secondClientId = process.env.CLIENT_ID_2;
   const secondGuildId = process.env.GUILD_ID_2 || config.bot.guildId;
   let secondary = null;
   if (secondToken) {
-    secondary = new SMPManager({ label: 'SECONDARY', token: secondToken, guildId: secondGuildId, startWeb: false });
+    secondary = new SMPManager({ label: 'SECONDARY', token: secondToken, clientId: secondClientId, guildId: secondGuildId, startWeb: false });
     bots.push(secondary);
   }
 

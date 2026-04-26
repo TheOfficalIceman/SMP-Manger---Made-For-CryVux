@@ -487,10 +487,12 @@ export function validateConfig(config) {
     errors.push("Bot token is required (DISCORD_TOKEN or TOKEN environment variable)");
   }
 
-  // CLIENT_ID is optional — auto-derived from the bot token at login (client.user.id).
-  // Only warn if missing in production so users know they can set it for the invite-link generator.
-  if (!process.env.CLIENT_ID && process.env.NODE_ENV === 'production') {
-    logger.warn("CLIENT_ID is not set — it will be auto-derived from the bot token after login.");
+  if (!process.env.CLIENT_ID) {
+    errors.push("Client ID is required (CLIENT_ID environment variable)");
+  }
+
+  if (process.env.DISCORD_TOKEN_2 && !process.env.CLIENT_ID_2) {
+    errors.push("Client ID for second bot is required when DISCORD_TOKEN_2 is set (CLIENT_ID_2 environment variable)");
   }
 
   
