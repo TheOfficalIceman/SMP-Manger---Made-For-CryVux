@@ -37,6 +37,7 @@ class SMPManager extends Client {
     this.config = config;
     this.botLabel = opts.label || 'PRIMARY';
     this.botToken = opts.token || config.bot.token;
+    this.botGuildId = opts.guildId || config.bot.guildId;
     this.startWeb = opts.startWeb !== false;
     this.sharedDb = opts.sharedDb || null;
     this.commands = new Collection();
@@ -326,7 +327,7 @@ class SMPManager extends Client {
 
   async registerCommands() {
     try {
-      await registerSlashCommands(this, this.config.bot.guildId);
+      await registerSlashCommands(this, this.botGuildId);
     } catch (error) {
       logger.error('Error registering commands:', error);
     }
@@ -386,9 +387,10 @@ try {
   bots.push(primary);
 
   const secondToken = process.env.DISCORD_TOKEN_2;
+  const secondGuildId = process.env.GUILD_ID_2 || config.bot.guildId;
   let secondary = null;
   if (secondToken) {
-    secondary = new SMPManager({ label: 'SECONDARY', token: secondToken, startWeb: false });
+    secondary = new SMPManager({ label: 'SECONDARY', token: secondToken, guildId: secondGuildId, startWeb: false });
     bots.push(secondary);
   }
 
