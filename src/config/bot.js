@@ -30,7 +30,7 @@ export const botConfig = {
     activities: [
       {
         // Text users will see (example: "Playing /help | SMP Manager").
-        name: "Watching ShardAscension",
+        name: "CryVux Causulay Watching The flash and The rokkie",
         // Activity type number (0 = Playing).
         type: 3, 
       },
@@ -241,7 +241,7 @@ export const botConfig = {
     },
 
     // Default priority for new tickets.
-    defaultPriority: "none",
+    defaultPriority: "high",
 
     // Category ID where closed tickets are archived.
     archiveCategory: null,
