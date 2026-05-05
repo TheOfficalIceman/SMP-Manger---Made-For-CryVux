@@ -321,5 +321,164 @@ export function setupAdminRoutes(app, client) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
+  /* ── Discord API proxy (HEAD_BOT_TOKEN) ── */
+  async function discordFetch(path) {
+    const token = process.env.HEAD_BOT_TOKEN;
+    if (!token) throw new Error('HEAD_BOT_TOKEN not set in Secrets');
+    const res = await fetch(`https://discord.com/api/v10${path}`, {
+      headers: { Authorization: `Bot ${token}`, 'User-Agent': 'TitanBot/1.0' }
+    });
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '');
+      throw new Error(`Discord API ${res.status}: ${txt.slice(0, 200)}`);
+    }
+    return res.json();
+  }
+
+  router.get('/api/discord/guilds', requireAuth, async (req, res) => {
+    try {
+      const guilds = await discordFetch('/users/@me/guilds');
+      res.json({ guilds });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  router.get('/api/discord/guild/:id', requireAuth, async (req, res) => {
+    try {
+      const guild = await discordFetch(`/guilds/${req.params.id}?with_counts=true`);
+      res.json({ guild });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  router.get('/api/discord/guild/:id/channels', requireAuth, async (req, res) => {
+    try {
+      const channels = await discordFetch(`/guilds/${req.params.id}/channels`);
+      res.json({ channels });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  router.get('/api/discord/guild/:id/roles', requireAuth, async (req, res) => {
+    try {
+      const roles = await discordFetch(`/guilds/${req.params.id}/roles`);
+      res.json({ roles });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  /* ── Ticket panels ── */
+  router.get('/api/ticket-panels/:guildId', requireAuth, async (req, res) => {
+    try {
+      const panels = (await client.db?.get?.(`guild:${req.params.guildId}:ticket:panels`)) || [];
+      res.json({ panels });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  router.post('/api/ticket-panels/:guildId', requireAuth, parseBody(), async (req, res) => {
+    try {
+      const panels = (await client.db?.get?.(`guild:${req.params.guildId}:ticket:panels`)) || [];
+      const panel = req.body || {};
+      if (!panel.name) return res.status(400).json({ error: 'Panel name is required' });
+      if (!panel.panelId) panel.panelId = Math.random().toString(36).slice(2, 10);
+      const idx = panels.findIndex(p => p.panelId === panel.panelId);
+      if (idx >= 0) panels[idx] = panel; else panels.push(panel);
+      await client.db?.set?.(`guild:${req.params.guildId}:ticket:panels`, panels);
+      logger.info(`[Admin] Ticket panel saved: ${panel.name}`);
+      res.json({ ok: true, panel });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  router.delete('/api/ticket-panels/:guildId/:panelId', requireAuth, async (req, res) => {
+    try {
+      let panels = (await client.db?.get?.(`guild:${req.params.guildId}:ticket:panels`)) || [];
+      panels = panels.filter(p => p.panelId !== req.params.panelId);
+      await client.db?.set?.(`guild:${req.params.guildId}:ticket:panels`, panels);
+      logger.info(`[Admin] Ticket panel deleted: ${req.params.panelId}`);
+      res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  /* ── Per-guild config ── */
+  router.get('/api/guild-config/:guildId', requireAuth, async (req, res) => {
+    try {
+      const { getGuildConfig } = await import('../services/guildConfig.js');
+      const config = await getGuildConfig(client, req.params.guildId);
+      res.json({ config });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  router.post('/api/guild-config/:guildId', requireAuth, parseBody(), async (req, res) => {
+    try {
+      const { getGuildConfig, setGuildConfig } = await import('../services/guildConfig.js');
+      const current = await getGuildConfig(client, req.params.guildId);
+      const updated = deepMerge(current, req.body || {});
+      await setGuildConfig(client, req.params.guildId, updated);
+      logger.info(`[Admin] Guild config updated: ${req.params.guildId}`);
+      res.json({ ok: true, config: updated });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  /* ── Leveling config per guild ── */
+  router.get('/api/leveling-config/:guildId', requireAuth, async (req, res) => {
+    try {
+      const config = (await client.db?.get?.(`${req.params.guildId}:leveling:config`)) || {};
+      res.json({ config });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  router.post('/api/leveling-config/:guildId', requireAuth, parseBody(), async (req, res) => {
+    try {
+      const current = (await client.db?.get?.(`${req.params.guildId}:leveling:config`)) || {};
+      const updated = { ...current, ...(req.body || {}) };
+      await client.db?.set?.(`${req.params.guildId}:leveling:config`, updated);
+      logger.info(`[Admin] Leveling config updated: ${req.params.guildId}`);
+      res.json({ ok: true, config: updated });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  /* ── Birthday config per guild ── */
+  router.get('/api/birthday-config/:guildId', requireAuth, async (req, res) => {
+    try {
+      const { getGuildConfig } = await import('../services/guildConfig.js');
+      const config = await getGuildConfig(client, req.params.guildId);
+      res.json({ birthdayChannelId: config.birthdayChannelId || '', birthdayRole: config.birthdayRole || '', birthdayMessage: config.birthdayMessage || '' });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  router.post('/api/birthday-config/:guildId', requireAuth, parseBody(), async (req, res) => {
+    try {
+      const { getGuildConfig, setGuildConfig } = await import('../services/guildConfig.js');
+      const current = await getGuildConfig(client, req.params.guildId);
+      await setGuildConfig(client, req.params.guildId, { ...current, ...req.body });
+      logger.info(`[Admin] Birthday config updated: ${req.params.guildId}`);
+      res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  /* ── Server snapshot info ── */
+  router.get('/api/server-snapshot/:guildId', requireAuth, async (req, res) => {
+    try {
+      const snap = await client.db?.get?.(`guild:${req.params.guildId}:server:snapshot`);
+      if (!snap) return res.json({ snapshot: null });
+      res.json({ snapshot: { savedAt: snap.savedAt, roleCount: snap.roles?.length ?? 0, channelCount: snap.channels?.length ?? 0 } });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  /* ── Download self-contained HTML dashboard ── */
+  router.get('/api/download', requireAuth, async (req, res) => {
+    try {
+      const cssPath = path.join(PUBLIC_DIR, 'css', 'style.css');
+      const jsPath  = path.join(PUBLIC_DIR, 'js', 'app.js');
+      const htmlPath = path.join(PUBLIC_DIR, 'index.html');
+      const css  = existsSync(cssPath)  ? readFileSync(cssPath,  'utf8') : '';
+      const js   = existsSync(jsPath)   ? readFileSync(jsPath,   'utf8') : '';
+      let html   = existsSync(htmlPath) ? readFileSync(htmlPath, 'utf8') : '';
+      const origin = `${req.protocol}://${req.get('host')}`;
+      const banner = `<script>window.__API_ORIGIN='${origin}';</script>\n`;
+      html = html.replace(/<link rel="stylesheet" href="[^"]+">/, `<style>\n${css}\n</style>`);
+      html = html.replace(/<script src="[^"]+"><\/script>/, `${banner}<script>\n${js}\n</script>`);
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Content-Disposition', 'attachment; filename="titanbot-dashboard.html"');
+      res.send(html);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
   app.use('/admin', router);
 }

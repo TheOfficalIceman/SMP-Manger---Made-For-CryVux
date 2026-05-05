@@ -1,1 +1,12 @@
-{}
+{
+  "moderation": {
+    "logChannel": "",
+    "muteRole": "",
+    "warnThreshold": 0,
+    "autoMod": {
+      "antiSpam": false,
+      "antiInvite": false,
+      "antiLink": false
+    }
+  }
+}

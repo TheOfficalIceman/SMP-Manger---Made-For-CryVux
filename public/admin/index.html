@@ -88,6 +88,34 @@
         </div>
       </div>
 
+      <div class="nav-section">
+        <span class="nav-section-label">Per-Server</span>
+        <div class="nav-item" data-panel="guildconfig" onclick="showPanel('guildconfig',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
+          <span>Server Config</span>
+        </div>
+        <div class="nav-item" data-panel="tickets" onclick="showPanel('tickets',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 100 4v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2a2 2 0 100-4V6z"/></svg>
+          <span>Ticket Systems</span>
+        </div>
+        <div class="nav-item" data-panel="leveling" onclick="showPanel('leveling',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm6-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zm6-3a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
+          <span>Leveling</span>
+        </div>
+        <div class="nav-item" data-panel="birthday" onclick="showPanel('birthday',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/></svg>
+          <span>Birthday</span>
+        </div>
+        <div class="nav-item" data-panel="serverbackup" onclick="showPanel('serverbackup',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293z"/></svg>
+          <span>Server Backup</span>
+        </div>
+        <div class="nav-item" data-panel="discordbrowser" onclick="showPanel('discordbrowser',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 9a2 2 0 114 0 2 2 0 01-4 0z"/><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a4 4 0 00-3.446 6.032l-2.261 2.26a1 1 0 101.414 1.415l2.261-2.261A4 4 0 1011 5z" clip-rule="evenodd"/></svg>
+          <span>Discord Browser</span>
+        </div>
+      </div>
+
       <div class="nav-section" id="nav-unlimited" style="display:none">
         <span class="nav-section-label">Unlimited</span>
         <div class="nav-item" data-panel="whitelist" onclick="showPanel('whitelist',this)">
@@ -128,6 +156,10 @@
           <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
           <span id="uptime-val">–</span>
         </div>
+        <button class="btn btn-ghost" onclick="downloadDashboard()" title="Download dashboard as standalone HTML file" style="display:flex;align-items:center;gap:6px;font-size:12px;padding:6px 12px">
+          <svg viewBox="0 0 20 20" fill="currentColor" style="width:14px;height:14px"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+          Download
+        </button>
       </div>
     </div>
 
@@ -659,6 +691,227 @@
             <div class="card-title">Saved Commands</div>
           </div>
           <div id="cmd-list"></div>
+        </div>
+      </div>
+
+      <!-- ─── Server Config (per-guild) ─────────────────── -->
+      <div class="panel" id="panel-guildconfig">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">⚙️ Server Config</div>
+            <div class="card-desc">Configure welcome, goodbye, logging, and role settings per server. Uses the HEAD BOT to populate dropdowns automatically.</div>
+          </div>
+          <div class="field" style="margin-bottom:18px">
+            <label>Select Server</label>
+            <select id="gc-guild-sel"><option value="">Loading…</option></select>
+          </div>
+          <div id="gc-main" style="display:none">
+            <div class="section-label">Welcome & Goodbye</div>
+            <div class="form-grid" style="margin-bottom:18px">
+              <div class="field"><label>Welcome Channel</label><select id="gc-welcome-ch"></select></div>
+              <div class="field"><label>Goodbye Channel</label><select id="gc-goodbye-ch"></select></div>
+              <div class="field cols-2"><label>Welcome Message <small style="color:var(--muted)">({user} {server} {memberCount})</small></label><textarea id="gc-welcome-msg" rows="2" placeholder="Welcome {user} to {server}!"></textarea></div>
+              <div class="field cols-2"><label>Goodbye Message</label><textarea id="gc-goodbye-msg" rows="2" placeholder="{user} has left {server}."></textarea></div>
+            </div>
+            <div class="section-label">Logging</div>
+            <div class="form-grid" style="margin-bottom:18px">
+              <div class="field"><label>General Log Channel</label><select id="gc-log-ch"></select></div>
+              <div class="field"><label>Mod Log Channel</label><select id="gc-modlog-ch"></select></div>
+            </div>
+            <div class="section-label">Roles</div>
+            <div class="form-grid" style="margin-bottom:18px">
+              <div class="field"><label>Mod Role</label><select id="gc-mod-role"></select></div>
+              <div class="field"><label>Admin Role</label><select id="gc-admin-role"></select></div>
+              <div class="field"><label>Auto-Role (on join)</label><select id="gc-autorole"></select></div>
+            </div>
+            <div class="section-label">Options</div>
+            <div class="toggles-list">
+              <div class="toggle-row">
+                <div class="toggle-info"><div class="toggle-name">DM user on ticket close</div><div class="toggle-desc">Send a DM with a transcript when a ticket is closed</div></div>
+                <label class="switch"><input type="checkbox" id="gc-dm-close" checked><span class="slider"></span></label>
+              </div>
+            </div>
+            <div class="save-bar">
+              <button class="btn btn-ghost" onclick="loadGuildConfigData()">Reset</button>
+              <button class="btn btn-primary" onclick="saveGuildConfig()">
+                <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293z"/></svg>
+                Save Server Config
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Ticket Systems ─────────────────── -->
+      <div class="panel" id="panel-tickets">
+        <div class="card" id="tp-form-card">
+          <div class="card-header">
+            <div class="card-title" id="tp-form-title">➕ Create Ticket Panel</div>
+            <div class="card-desc">Each panel sends an embed with a button to a channel. Users click to open a ticket in its own private channel.</div>
+          </div>
+          <div class="field" style="margin-bottom:18px">
+            <label>Select Server</label>
+            <select id="tp-guild-sel"><option value="">Loading…</option></select>
+          </div>
+          <div id="tp-main" style="display:none">
+            <div class="form-grid" style="margin-bottom:18px">
+              <div class="field"><label>Panel Name <span style="color:var(--red)">*</span></label><input id="tp-f-name" placeholder="e.g. General Support"></div>
+              <div class="field"><label>Button Label</label><input id="tp-f-btn" placeholder="Create Ticket"></div>
+              <div class="field cols-2"><label>Panel Message (shown in the embed)</label><textarea id="tp-f-msg" rows="2" placeholder="Click below to open a support ticket."></textarea></div>
+              <div class="field"><label>Deploy Channel (where embed is sent)</label><select id="tp-f-channel"></select></div>
+              <div class="field"><label>Ticket Category (tickets open here)</label><select id="tp-f-category"></select></div>
+              <div class="field"><label>Staff Role (gets pinged + access)</label><select id="tp-f-staffrole"></select></div>
+              <div class="field"><label>Max Tickets per User</label><input id="tp-f-max" type="number" value="3" min="1" max="20"></div>
+            </div>
+            <div class="toggles-list" style="margin-bottom:18px">
+              <div class="toggle-row">
+                <div class="toggle-info"><div class="toggle-name">DM user on close</div><div class="toggle-desc">Send a DM when their ticket is closed</div></div>
+                <label class="switch"><input type="checkbox" id="tp-f-dm" checked><span class="slider"></span></label>
+              </div>
+            </div>
+            <div class="save-bar">
+              <button class="btn btn-ghost" id="tp-cancel-btn" style="display:none" onclick="clearTicketForm()">Cancel Edit</button>
+              <button class="btn btn-primary" onclick="saveTicketPanel()">
+                <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293z"/></svg>
+                Save Panel
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px" id="tp-list-card">
+          <div class="card-header"><div class="card-title">Saved Panels</div></div>
+          <div id="tp-panel-list"><div style="color:var(--muted);font-size:13px">Select a server above to view panels.</div></div>
+        </div>
+      </div>
+
+      <!-- ─── Leveling ─────────────────── -->
+      <div class="panel" id="panel-leveling">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">⭐ Leveling</div>
+            <div class="card-desc">Configure the XP and level-up system per server.</div>
+          </div>
+          <div class="field" style="margin-bottom:18px">
+            <label>Select Server</label>
+            <select id="lv-guild-sel"><option value="">Loading…</option></select>
+          </div>
+          <div id="lv-main" style="display:none">
+            <div class="section-label">XP Settings</div>
+            <div class="form-grid" style="margin-bottom:18px">
+              <div class="field"><label>Min XP per message</label><input id="lv-xp-min" type="number" placeholder="10" min="0" max="500"></div>
+              <div class="field"><label>Max XP per message</label><input id="lv-xp-max" type="number" placeholder="25" min="0" max="500"></div>
+              <div class="field"><label>XP Cooldown (seconds)</label><input id="lv-cooldown" type="number" placeholder="60" min="0"></div>
+              <div class="field"><label>Level-up announce channel</label><select id="lv-levelup-ch"></select><div class="hint">Leave blank to announce in the same channel</div></div>
+            </div>
+            <div class="section-label">Options</div>
+            <div class="toggles-list">
+              <div class="toggle-row">
+                <div class="toggle-info"><div class="toggle-name">Enable Leveling</div><div class="toggle-desc">Turn the XP system on or off for this server</div></div>
+                <label class="switch"><input type="checkbox" id="lv-enabled" checked><span class="slider"></span></label>
+              </div>
+              <div class="toggle-row">
+                <div class="toggle-info"><div class="toggle-name">Announce Level-Ups</div><div class="toggle-desc">Post a message when a user levels up</div></div>
+                <label class="switch"><input type="checkbox" id="lv-announce" checked><span class="slider"></span></label>
+              </div>
+            </div>
+            <div class="save-bar">
+              <button class="btn btn-ghost" onclick="loadLevelingData()">Reset</button>
+              <button class="btn btn-primary" onclick="saveLeveling()">
+                <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293z"/></svg>
+                Save Leveling
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Birthday ─────────────────── -->
+      <div class="panel" id="panel-birthday">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🎂 Birthday</div>
+            <div class="card-desc">Configure birthday announcements per server.</div>
+          </div>
+          <div class="field" style="margin-bottom:18px">
+            <label>Select Server</label>
+            <select id="bd-guild-sel"><option value="">Loading…</option></select>
+          </div>
+          <div id="bd-main" style="display:none">
+            <div class="form-grid" style="margin-bottom:18px">
+              <div class="field"><label>Birthday Announce Channel</label><select id="bd-channel"></select></div>
+              <div class="field"><label>Birthday Role (given for 24 hrs)</label><select id="bd-role"></select></div>
+              <div class="field cols-2"><label>Birthday Message <small style="color:var(--muted)">({user} {server})</small></label><input id="bd-message" placeholder="🎂 Happy Birthday {user}! 🎉"></div>
+            </div>
+            <div class="save-bar">
+              <button class="btn btn-ghost" onclick="loadBirthdayData()">Reset</button>
+              <button class="btn btn-primary" onclick="saveBirthday()">
+                <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293z"/></svg>
+                Save Birthday Settings
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Server Backup ─────────────────── -->
+      <div class="panel" id="panel-serverbackup">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">💾 Server Backup</div>
+            <div class="card-desc">Save and restore your entire Discord server structure (roles, categories, channels) using <code>!saveserver</code> and <code>!loadserver</code> in Discord.</div>
+          </div>
+          <div class="field" style="margin-bottom:18px">
+            <label>Select Server</label>
+            <select id="sb-guild-sel"><option value="">Loading…</option></select>
+          </div>
+          <div id="sb-main" style="display:none">
+            <div class="info-box" style="margin-bottom:18px">
+              <strong>How it works:</strong> Run <code>!saveserver</code> in your Discord server to create a snapshot. Run <code>!loadserver</code> to restore from the last snapshot. Both commands require bot owner access.
+            </div>
+            <div class="section-label">Last Snapshot</div>
+            <div id="sb-info" style="margin-bottom:18px;padding:12px;background:var(--input-bg);border-radius:var(--radius-sm);border:1px solid var(--border)">
+              <div style="color:var(--muted)">Select a server to see snapshot info.</div>
+            </div>
+            <div class="snapshot-actions" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+              <button class="btn btn-primary" onclick="sbInstruction('save')">
+                <svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293z"/></svg>
+                How to Save
+              </button>
+              <button class="btn btn-ghost" onclick="sbInstruction('restore')">
+                <svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/></svg>
+                How to Restore
+              </button>
+              <button class="btn btn-ghost" onclick="loadSnapshotInfo()">↻ Refresh</button>
+            </div>
+            <div id="sb-cmd-hint" style="display:none;padding:10px 14px;background:var(--input-bg);border-left:3px solid var(--accent);border-radius:4px;font-family:monospace;font-size:13px;color:var(--accent)"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Discord Browser ─────────────────── -->
+      <div class="panel" id="panel-discordbrowser">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🔍 Discord Browser</div>
+            <div class="card-desc">Browse your servers' channels and roles. Click any ID to copy it — useful when setting up other features.</div>
+          </div>
+          <div class="field" style="margin-bottom:18px">
+            <label>Select Server</label>
+            <select id="db-guild-sel"><option value="">Loading…</option></select>
+          </div>
+          <div id="db-guild-detail" style="display:none">
+            <div class="card-title" style="margin-bottom:14px;font-size:15px" id="db-guild-name"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+              <div>
+                <div class="section-label" style="margin-bottom:10px">Channels <small style="color:var(--muted)">(click ID to copy)</small></div>
+                <div id="db-channels" style="max-height:400px;overflow-y:auto"></div>
+              </div>
+              <div>
+                <div class="section-label" style="margin-bottom:10px">Roles <small style="color:var(--muted)">(click ID to copy)</small></div>
+                <div id="db-roles" style="max-height:400px;overflow-y:auto"></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

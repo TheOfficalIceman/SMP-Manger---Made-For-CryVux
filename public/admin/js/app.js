@@ -48,7 +48,15 @@ const panelTitles = {
   whitelist: 'Whitelist',
   setmoney: 'Set Balance',
   rawconfig: 'Raw Config Editor',
+  guildconfig: 'Server Config',
+  tickets: 'Ticket Systems',
+  leveling: 'Leveling',
+  birthday: 'Birthday',
+  serverbackup: 'Server Backup',
+  discordbrowser: 'Discord Browser',
 };
+
+const _panelInited = new Set();
 
 function showPanel(id, el) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -64,6 +72,16 @@ function showPanel(id, el) {
   if (id === 'modules') renderModulesGrid();
   if (id === 'moderation') loadModerationConfig();
   if (id === 'logging') loadLoggingConfig();
+
+  if (!_panelInited.has(id)) {
+    _panelInited.add(id);
+    if (id === 'guildconfig')    initGuildConfig();
+    if (id === 'tickets')        initTicketSystems();
+    if (id === 'leveling')       initLeveling();
+    if (id === 'birthday')       initBirthday();
+    if (id === 'serverbackup')   initServerBackup();
+    if (id === 'discordbrowser') initDiscordBrowser();
+  }
 }
 
 function switchTab(btn, group, contentId) {
@@ -88,10 +106,11 @@ function toast(msg, type = 'success') {
 }
 
 /* ─── API ─────────────────────────────── */
+const _BASE = (window.__API_ORIGIN || '') + '/admin/api';
 async function api(method, path, body) {
-  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  const opts = { method, headers: { 'Content-Type': 'application/json' }, credentials: 'include' };
   if (body !== undefined) opts.body = JSON.stringify(body);
-  const res = await fetch('/admin/api' + path, opts);
+  const res = await fetch(_BASE + path, opts);
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Request failed');
   return data;
@@ -613,4 +632,395 @@ async function saveRC(field, elId) {
 async function doLogout() {
   try { await api('POST', '/logout'); } catch { /* ignore */ }
   window.location.href = '/admin/login';
+}
+
+/* ─── Download dashboard ─────────────────────────────── */
+function downloadDashboard() {
+  window.location.href = _BASE + '/download';
+}
+
+/* ─── Guild selector helper ─────────────────────────────── */
+let _guildsCache = null;
+async function loadGuildSelector(selectId, onSelect) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Loading servers…</option>';
+  try {
+    const d = await api('GET', '/discord/guilds');
+    _guildsCache = d.guilds || [];
+    sel.innerHTML = '<option value="">— Select a server —</option>' +
+      _guildsCache.map(g => `<option value="${g.id}">${esc(g.name)}</option>`).join('');
+    sel.onchange = () => { if (sel.value && onSelect) onSelect(sel.value, sel.options[sel.selectedIndex].text); };
+  } catch (e) {
+    sel.innerHTML = `<option value="">Error: ${esc(e.message)}</option>`;
+  }
+}
+
+async function loadChannelSelector(guildId, selectId, filterType) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Loading…</option>';
+  try {
+    const d = await api('GET', `/discord/guild/${guildId}/channels`);
+    const TYPES = { text: [0, 5], voice: [2], category: [4], forum: [15], all: null };
+    const allowed = TYPES[filterType] || null;
+    const ch = (d.channels || [])
+      .filter(c => !allowed || allowed.includes(c.type))
+      .sort((a, b) => a.position - b.position);
+    sel.innerHTML = '<option value="">— Select a channel —</option>' +
+      ch.map(c => `<option value="${c.id}">#${esc(c.name)}</option>`).join('');
+  } catch (e) { sel.innerHTML = `<option value="">Error: ${esc(e.message)}</option>`; }
+}
+
+async function loadRoleSelector(guildId, selectId) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Loading…</option>';
+  try {
+    const d = await api('GET', `/discord/guild/${guildId}/roles`);
+    const roles = (d.roles || []).filter(r => r.name !== '@everyone').sort((a, b) => b.position - a.position);
+    sel.innerHTML = '<option value="">— Select a role —</option>' +
+      roles.map(r => `<option value="${r.id}" style="color:#${r.color ? r.color.toString(16).padStart(6,'0') : 'aaa'}">@${esc(r.name)}</option>`).join('');
+  } catch (e) { sel.innerHTML = `<option value="">Error: ${esc(e.message)}</option>`; }
+}
+
+/* ─── Discord Browser ─────────────────────────────── */
+let _browserGuildId = null;
+async function initDiscordBrowser() {
+  await loadGuildSelector('db-guild-sel', async (guildId, name) => {
+    _browserGuildId = guildId;
+    document.getElementById('db-guild-name').textContent = name;
+    document.getElementById('db-guild-detail').style.display = 'block';
+    await Promise.all([loadBrowserChannels(guildId), loadBrowserRoles(guildId)]);
+  });
+}
+
+async function loadBrowserChannels(guildId) {
+  const el = document.getElementById('db-channels');
+  el.innerHTML = '<div style="color:var(--muted)">Loading…</div>';
+  try {
+    const d = await api('GET', `/discord/guild/${guildId}/channels`);
+    const typeNames = { 0:'# Text',2:'🔊 Voice',4:'📂 Category',5:'📢 Announce',13:'🎙️ Stage',15:'💬 Forum' };
+    const sorted = (d.channels||[]).sort((a,b)=>a.position-b.position);
+    el.innerHTML = sorted.map(c => `
+      <div class="browser-row">
+        <span class="browser-type">${typeNames[c.type]||'?'}</span>
+        <span class="browser-name">${esc(c.name)}</span>
+        <code class="browser-id" onclick="copyId('${c.id}')" title="Click to copy">${c.id}</code>
+      </div>`).join('') || '<div style="color:var(--muted)">No channels</div>';
+  } catch (e) { el.innerHTML = `<div style="color:var(--red)">${esc(e.message)}</div>`; }
+}
+
+async function loadBrowserRoles(guildId) {
+  const el = document.getElementById('db-roles');
+  el.innerHTML = '<div style="color:var(--muted)">Loading…</div>';
+  try {
+    const d = await api('GET', `/discord/guild/${guildId}/roles`);
+    const roles = (d.roles||[]).filter(r=>r.name!=='@everyone').sort((a,b)=>b.position-a.position);
+    el.innerHTML = roles.map(r => {
+      const hex = r.color ? '#'+r.color.toString(16).padStart(6,'0') : '#99aab5';
+      return `<div class="browser-row">
+        <span class="role-dot" style="background:${hex}"></span>
+        <span class="browser-name">@${esc(r.name)}</span>
+        <code class="browser-id" onclick="copyId('${r.id}')" title="Click to copy">${r.id}</code>
+      </div>`;
+    }).join('') || '<div style="color:var(--muted)">No roles</div>';
+  } catch (e) { el.innerHTML = `<div style="color:var(--red)">${esc(e.message)}</div>`; }
+}
+
+function copyId(id) {
+  navigator.clipboard.writeText(id).then(() => toast('ID copied: ' + id));
+}
+
+/* ─── Ticket Systems ─────────────────────────────── */
+let _tpGuildId = null;
+let _tpGuildChannels = [];
+let _tpGuildRoles = [];
+let _tpEditId = null;
+
+async function initTicketSystems() {
+  await loadGuildSelector('tp-guild-sel', async (guildId) => {
+    _tpGuildId = guildId;
+    document.getElementById('tp-main').style.display = 'block';
+    await Promise.all([
+      loadTicketPanelList(),
+      api('GET', `/discord/guild/${guildId}/channels`).then(d => { _tpGuildChannels = d.channels || []; }).catch(()=>{}),
+      api('GET', `/discord/guild/${guildId}/roles`).then(d => { _tpGuildRoles = d.roles || []; }).catch(()=>{}),
+    ]);
+    populateTicketSelectors();
+  });
+}
+
+function populateTicketSelectors() {
+  const textCh = _tpGuildChannels.filter(c=>[0,5].includes(c.type)).sort((a,b)=>a.position-b.position);
+  const cats   = _tpGuildChannels.filter(c=>c.type===4).sort((a,b)=>a.position-b.position);
+  const roles  = _tpGuildRoles.filter(r=>r.name!=='@everyone').sort((a,b)=>b.position-a.position);
+
+  const chOpts = '<option value="">— None —</option>' + textCh.map(c=>`<option value="${c.id}">#${esc(c.name)}</option>`).join('');
+  const catOpts = '<option value="">— None —</option>' + cats.map(c=>`<option value="${c.id}">📂 ${esc(c.name)}</option>`).join('');
+  const roleOpts = '<option value="">— None —</option>' + roles.map(r=>`<option value="${r.id}">@${esc(r.name)}</option>`).join('');
+
+  setInner('tp-f-channel', chOpts);
+  setInner('tp-f-category', catOpts);
+  setInner('tp-f-staffrole', roleOpts);
+}
+
+function setInner(id, html) { const e = document.getElementById(id); if (e) e.innerHTML = html; }
+
+async function loadTicketPanelList() {
+  if (!_tpGuildId) return;
+  const el = document.getElementById('tp-panel-list');
+  el.innerHTML = '<div style="color:var(--muted)">Loading…</div>';
+  try {
+    const d = await api('GET', `/ticket-panels/${_tpGuildId}`);
+    const panels = d.panels || [];
+    if (!panels.length) { el.innerHTML = '<div style="color:var(--muted);padding:8px 0">No ticket panels yet. Create one above.</div>'; return; }
+    el.innerHTML = panels.map(p => `
+      <div class="cmd-item">
+        <div class="cmd-name">🎫 ${esc(p.name)}</div>
+        <div class="cmd-preview">${esc(p.panelMessage||'').slice(0,80)} · Button: <strong>${esc(p.buttonLabel||'Create Ticket')}</strong></div>
+        <div class="cmd-actions">
+          ${p.categoryId ? `<span class="badge badge-embed">Cat set</span>` : ''}
+          ${p.staffRoleId ? `<span class="badge badge-owner">Role set</span>` : ''}
+          <button class="btn btn-primary btn-sm" onclick="editTicketPanel(${JSON.stringify(p).replace(/"/g,'&quot;')})">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteTicketPanel('${p.panelId}')">Delete</button>
+        </div>
+      </div>`).join('');
+  } catch (e) { el.innerHTML = `<div style="color:var(--red)">${esc(e.message)}</div>`; }
+}
+
+function editTicketPanel(p) {
+  _tpEditId = p.panelId;
+  setVal('tp-f-name', p.name || '');
+  setVal('tp-f-msg', p.panelMessage || '');
+  setVal('tp-f-btn', p.buttonLabel || 'Create Ticket');
+  setVal('tp-f-max', p.maxTicketsPerUser || 3);
+  setCheck('tp-f-dm', p.dmOnClose !== false);
+  // Set selects after a tick (DOM may not have values yet)
+  setTimeout(() => {
+    setVal('tp-f-channel', p.channelId || '');
+    setVal('tp-f-category', p.categoryId || '');
+    setVal('tp-f-staffrole', p.staffRoleId || '');
+  }, 50);
+  document.getElementById('tp-form-title').textContent = `✏️ Edit Panel: ${p.name}`;
+  document.getElementById('tp-cancel-btn').style.display = 'inline-flex';
+  document.getElementById('tp-form-card').scrollIntoView({ behavior: 'smooth' });
+}
+
+function clearTicketForm() {
+  _tpEditId = null;
+  ['tp-f-name','tp-f-msg','tp-f-btn'].forEach(id => setVal(id, ''));
+  setVal('tp-f-max', 3);
+  setCheck('tp-f-dm', true);
+  ['tp-f-channel','tp-f-category','tp-f-staffrole'].forEach(id => setVal(id, ''));
+  document.getElementById('tp-form-title').textContent = '➕ Create Ticket Panel';
+  document.getElementById('tp-cancel-btn').style.display = 'none';
+}
+
+async function saveTicketPanel() {
+  if (!_tpGuildId) return toast('Select a server first', 'error');
+  const name = document.getElementById('tp-f-name')?.value?.trim();
+  if (!name) return toast('Panel name is required', 'error');
+  const panel = {
+    panelId: _tpEditId || undefined,
+    name,
+    panelMessage: document.getElementById('tp-f-msg')?.value?.trim() || 'Click below to open a support ticket.',
+    buttonLabel: document.getElementById('tp-f-btn')?.value?.trim() || 'Create Ticket',
+    channelId: document.getElementById('tp-f-channel')?.value || null,
+    categoryId: document.getElementById('tp-f-category')?.value || null,
+    staffRoleId: document.getElementById('tp-f-staffrole')?.value || null,
+    maxTicketsPerUser: parseInt(document.getElementById('tp-f-max')?.value || '3'),
+    dmOnClose: getCheck('tp-f-dm'),
+  };
+  try {
+    await api('POST', `/ticket-panels/${_tpGuildId}`, panel);
+    toast(`Panel "${name}" saved!`);
+    clearTicketForm();
+    loadTicketPanelList();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteTicketPanel(panelId) {
+  if (!confirm('Delete this ticket panel?')) return;
+  try {
+    await api('DELETE', `/ticket-panels/${_tpGuildId}/${panelId}`);
+    toast('Panel deleted');
+    loadTicketPanelList();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+/* ─── Per-Guild Config (Welcome/Logging/Roles) ─────────────────────────────── */
+let _gcGuildId = null;
+
+async function initGuildConfig() {
+  await loadGuildSelector('gc-guild-sel', async (guildId) => {
+    _gcGuildId = guildId;
+    document.getElementById('gc-main').style.display = 'block';
+    await loadGuildConfigData();
+    await Promise.all([
+      loadChannelSelector(guildId, 'gc-welcome-ch', 'text'),
+      loadChannelSelector(guildId, 'gc-goodbye-ch', 'text'),
+      loadChannelSelector(guildId, 'gc-log-ch', 'text'),
+      loadChannelSelector(guildId, 'gc-modlog-ch', 'text'),
+      loadRoleSelector(guildId, 'gc-mod-role'),
+      loadRoleSelector(guildId, 'gc-admin-role'),
+      loadRoleSelector(guildId, 'gc-autorole'),
+    ]);
+  });
+}
+
+async function loadGuildConfigData() {
+  if (!_gcGuildId) return;
+  try {
+    const d = await api('GET', `/guild-config/${_gcGuildId}`);
+    const c = d.config || {};
+    setVal('gc-welcome-msg', c.welcomeMessage || '');
+    setVal('gc-goodbye-msg', c.goodbyeMessage || '');
+    setCheck('gc-dm-close', c.dmOnClose !== false);
+    setTimeout(() => {
+      setVal('gc-welcome-ch', c.welcomeChannelId || c.welcomeChannel || '');
+      setVal('gc-goodbye-ch', c.goodbyeChannelId || '');
+      setVal('gc-log-ch', c.logChannelId || '');
+      setVal('gc-modlog-ch', c.modLogChannelId || '');
+      setVal('gc-mod-role', c.modRole || '');
+      setVal('gc-admin-role', c.adminRole || '');
+      setVal('gc-autorole', c.autoRole || '');
+    }, 100);
+  } catch (e) { toast('Failed to load config: ' + e.message, 'error'); }
+}
+
+async function saveGuildConfig() {
+  if (!_gcGuildId) return toast('Select a server first', 'error');
+  try {
+    await api('POST', `/guild-config/${_gcGuildId}`, {
+      welcomeChannelId: document.getElementById('gc-welcome-ch')?.value || null,
+      welcomeMessage: document.getElementById('gc-welcome-msg')?.value || '',
+      goodbyeChannelId: document.getElementById('gc-goodbye-ch')?.value || null,
+      goodbyeMessage: document.getElementById('gc-goodbye-msg')?.value || '',
+      logChannelId: document.getElementById('gc-log-ch')?.value || null,
+      modLogChannelId: document.getElementById('gc-modlog-ch')?.value || null,
+      modRole: document.getElementById('gc-mod-role')?.value || null,
+      adminRole: document.getElementById('gc-admin-role')?.value || null,
+      autoRole: document.getElementById('gc-autorole')?.value || null,
+      dmOnClose: getCheck('gc-dm-close'),
+    });
+    toast('Server config saved!');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+/* ─── Leveling ─────────────────────────────── */
+let _lvGuildId = null;
+
+async function initLeveling() {
+  await loadGuildSelector('lv-guild-sel', async (guildId) => {
+    _lvGuildId = guildId;
+    document.getElementById('lv-main').style.display = 'block';
+    await loadLevelingData();
+    loadChannelSelector(guildId, 'lv-levelup-ch', 'text');
+  });
+}
+
+async function loadLevelingData() {
+  if (!_lvGuildId) return;
+  try {
+    const d = await api('GET', `/leveling-config/${_lvGuildId}`);
+    const c = d.config || {};
+    setVal('lv-xp-min', c.xpMin ?? 10);
+    setVal('lv-xp-max', c.xpMax ?? 25);
+    setVal('lv-cooldown', c.cooldown ?? 60);
+    setCheck('lv-enabled', c.enabled !== false);
+    setCheck('lv-announce', c.announceOnLevelUp !== false);
+    setTimeout(() => setVal('lv-levelup-ch', c.levelUpChannelId || ''), 100);
+  } catch (e) { toast('Failed to load leveling config: ' + e.message, 'error'); }
+}
+
+async function saveLeveling() {
+  if (!_lvGuildId) return toast('Select a server first', 'error');
+  try {
+    await api('POST', `/leveling-config/${_lvGuildId}`, {
+      enabled: getCheck('lv-enabled'),
+      xpMin: parseInt(document.getElementById('lv-xp-min')?.value || '10'),
+      xpMax: parseInt(document.getElementById('lv-xp-max')?.value || '25'),
+      cooldown: parseInt(document.getElementById('lv-cooldown')?.value || '60'),
+      announceOnLevelUp: getCheck('lv-announce'),
+      levelUpChannelId: document.getElementById('lv-levelup-ch')?.value || null,
+    });
+    toast('Leveling settings saved!');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+/* ─── Birthday ─────────────────────────────── */
+let _bdGuildId = null;
+
+async function initBirthday() {
+  await loadGuildSelector('bd-guild-sel', async (guildId) => {
+    _bdGuildId = guildId;
+    document.getElementById('bd-main').style.display = 'block';
+    await loadBirthdayData();
+    await Promise.all([
+      loadChannelSelector(guildId, 'bd-channel', 'text'),
+      loadRoleSelector(guildId, 'bd-role'),
+    ]);
+  });
+}
+
+async function loadBirthdayData() {
+  if (!_bdGuildId) return;
+  try {
+    const d = await api('GET', `/birthday-config/${_bdGuildId}`);
+    setVal('bd-message', d.birthdayMessage || '🎂 Happy Birthday {user}! 🎉');
+    setTimeout(() => {
+      setVal('bd-channel', d.birthdayChannelId || '');
+      setVal('bd-role', d.birthdayRole || '');
+    }, 100);
+  } catch (e) { toast('Failed to load birthday config: ' + e.message, 'error'); }
+}
+
+async function saveBirthday() {
+  if (!_bdGuildId) return toast('Select a server first', 'error');
+  try {
+    await api('POST', `/birthday-config/${_bdGuildId}`, {
+      birthdayChannelId: document.getElementById('bd-channel')?.value || null,
+      birthdayRole: document.getElementById('bd-role')?.value || null,
+      birthdayMessage: document.getElementById('bd-message')?.value || '🎂 Happy Birthday {user}! 🎉',
+    });
+    toast('Birthday settings saved!');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+/* ─── Server Backup ─────────────────────────────── */
+let _sbGuildId = null;
+
+async function initServerBackup() {
+  await loadGuildSelector('sb-guild-sel', async (guildId) => {
+    _sbGuildId = guildId;
+    document.getElementById('sb-main').style.display = 'block';
+    loadSnapshotInfo();
+  });
+}
+
+async function loadSnapshotInfo() {
+  if (!_sbGuildId) return;
+  const el = document.getElementById('sb-info');
+  el.innerHTML = '<div style="color:var(--muted)">Loading…</div>';
+  try {
+    const d = await api('GET', `/server-snapshot/${_sbGuildId}`);
+    if (!d.snapshot) {
+      el.innerHTML = '<div style="color:var(--muted)">No backup found for this server.</div>';
+    } else {
+      const date = new Date(d.snapshot.savedAt).toLocaleString();
+      el.innerHTML = `
+        <div class="snapshot-stat"><strong>Last saved:</strong> ${date}</div>
+        <div class="snapshot-stat"><strong>Roles:</strong> ${d.snapshot.roleCount}</div>
+        <div class="snapshot-stat"><strong>Channels:</strong> ${d.snapshot.channelCount}</div>`;
+    }
+  } catch (e) { el.innerHTML = `<div style="color:var(--red)">${esc(e.message)}</div>`; }
+}
+
+function sbInstruction(action) {
+  if (!_sbGuildId) return toast('Select a server first', 'error');
+  const cmd = action === 'save' ? '!saveserver' : '!loadserver';
+  toast(`Run "${cmd}" in your Discord server to ${action === 'save' ? 'save a snapshot' : 'restore from snapshot'}`);
+  document.getElementById('sb-cmd-hint').textContent = `→ Type "${cmd}" in your Discord server`;
+  document.getElementById('sb-cmd-hint').style.display = 'block';
 }

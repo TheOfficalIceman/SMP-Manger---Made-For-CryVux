@@ -1085,6 +1085,59 @@ body {
 }
 .checkbox-label input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
 
+/* ─── Discord Browser ─────────────────────────────────── */
+.browser-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.browser-row:last-child { border-bottom: none; }
+.browser-row:hover { background: var(--card2); }
+.browser-type { color: var(--muted); min-width: 72px; font-size: 11px; }
+.browser-name { flex: 1; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.browser-id {
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 10px;
+  color: var(--muted2);
+  cursor: pointer;
+  user-select: all;
+  transition: border-color .15s, color .15s;
+}
+.browser-id:hover { border-color: var(--accent); color: var(--accent); }
+.role-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+/* ─── Snapshot stats ─────────────────────────────────── */
+.snapshot-stat { margin-bottom: 6px; font-size: 13px; color: var(--text); }
+.snapshot-stat strong { color: var(--muted2); }
+
+/* ─── form-grid cols-2 span ─────────────────────────────────── */
+.form-grid .field.cols-2 { grid-column: span 2; }
+
+/* ─── Info box ─────────────────────────────────── */
+.info-box {
+  padding: 10px 14px;
+  background: rgba(88,101,242,.08);
+  border: 1px solid rgba(88,101,242,.2);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--muted2);
+  line-height: 1.6;
+}
+.info-box code {
+  background: var(--input-bg);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--accent);
+  font-size: 12px;
+}
+
 /* ─── Responsive ─────────────────────────────────── */
 @media (max-width: 900px) {
   .sidebar { width: 60px; }
