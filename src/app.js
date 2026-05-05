@@ -13,6 +13,7 @@ import { checkBirthdays } from './services/birthdayService.js';
 import { checkGiveaways } from './services/giveawayService.js';
 import { loadCommands, registerCommands as registerSlashCommands } from './handlers/commandLoader.js';
 import { setupAdminRoutes } from './web/adminRoutes.js';
+import { generateDashboard } from '../scripts/generateDashboard.js';
 
 class SMPManager extends Client {
   constructor(opts = {}) {
@@ -84,6 +85,7 @@ class SMPManager extends Client {
       if (this.startWeb) {
         startupLog('Starting web server...');
         this.startWebServer();
+        try { generateDashboard(); } catch (e) { logger.warn('[Dashboard] Could not generate dashboard file: ' + e.message); }
       } else {
         startupLog('Skipping web server (secondary bot)');
       }

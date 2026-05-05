@@ -1,0 +1,3183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TitanBot — Dashboard</title>
+  <style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0b0d11;
+  --surface: #13161c;
+  --card: #1a1d26;
+  --card2: #1e2230;
+  --border: #2a2d3a;
+  --border2: #353849;
+  --input-bg: #111420;
+  --text: #e2e4ed;
+  --muted: #6b6f84;
+  --muted2: #9397ab;
+  --accent: #5865f2;
+  --accent-hover: #4752c4;
+  --accent-glow: rgba(88, 101, 242, 0.15);
+  --green: #23d160;
+  --green-bg: rgba(35, 209, 96, 0.12);
+  --red: #ed4245;
+  --red-bg: rgba(237, 66, 69, 0.12);
+  --yellow: #f5c542;
+  --yellow-bg: rgba(245, 197, 66, 0.12);
+  --blue: #3b9edd;
+  --purple: #9f7aea;
+  --sidebar-w: 248px;
+  --topbar-h: 60px;
+  --radius: 10px;
+  --radius-sm: 7px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+
+html, body { height: 100%; }
+
+body {
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Scrollbar ─────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+/* ─── Login Page ─────────────────────────────────── */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at 60% 20%, rgba(88,101,242,0.08) 0%, transparent 60%), var(--bg);
+}
+
+.login-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 48px 44px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: var(--shadow), 0 0 0 1px rgba(255,255,255,0.03);
+}
+
+.login-logo {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.login-logo .bot-icon {
+  width: 60px;
+  height: 60px;
+  background: var(--accent);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  box-shadow: 0 8px 32px rgba(88,101,242,0.35);
+}
+
+.login-logo .bot-icon svg { width: 32px; height: 32px; color: #fff; }
+.login-logo h1 { font-size: 22px; font-weight: 700; color: #fff; letter-spacing: -.4px; }
+.login-logo p { font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+.login-field { margin-bottom: 18px; }
+.login-field label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--muted2);
+  margin-bottom: 7px;
+}
+
+.login-field input {
+  width: 100%;
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 11px 14px;
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+  transition: border .2s, box-shadow .2s;
+}
+
+.login-field input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.login-field .field-hint {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 5px;
+}
+
+.btn-login {
+  width: 100%;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background .2s, transform .1s, box-shadow .2s;
+  letter-spacing: .2px;
+}
+.btn-login:hover { background: var(--accent-hover); box-shadow: 0 4px 16px rgba(88,101,242,0.3); }
+.btn-login:active { transform: scale(.99); }
+
+.login-error {
+  background: var(--red-bg);
+  border: 1px solid rgba(237,66,69,.3);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--red);
+  margin-top: 14px;
+  display: none;
+}
+
+/* ─── App Layout ─────────────────────────────────── */
+.app { display: flex; height: 100vh; overflow: hidden; }
+
+/* ─── Sidebar ─────────────────────────────────── */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  transition: width .2s;
+  z-index: 100;
+}
+
+.sidebar-header {
+  padding: 18px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.sidebar-icon {
+  width: 38px;
+  height: 38px;
+  background: var(--accent);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(88,101,242,0.3);
+}
+.sidebar-icon svg { width: 20px; height: 20px; color: #fff; }
+
+.sidebar-brand .brand-name { font-size: 14px; font-weight: 700; color: #fff; }
+.sidebar-brand .brand-sub { font-size: 11px; color: var(--muted); }
+
+.sidebar-nav { flex: 1; padding: 12px 10px; overflow-y: auto; }
+
+.nav-section { margin-bottom: 22px; }
+
+.nav-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .9px;
+  color: var(--muted);
+  padding: 0 8px;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--muted2);
+  font-size: 13px;
+  font-weight: 500;
+  transition: all .15s;
+  margin-bottom: 1px;
+  border: 1px solid transparent;
+  user-select: none;
+}
+
+.nav-item:hover { background: var(--accent-glow); color: var(--text); border-color: transparent; }
+.nav-item.active { background: var(--accent-glow); color: #fff; font-weight: 600; border-color: rgba(88,101,242,.25); }
+.nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+.sidebar-footer {
+  padding: 14px 16px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.bot-status-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 12px;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex-shrink: 0;
+  position: relative;
+}
+.status-indicator.online { background: var(--green); }
+.status-indicator.online::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: rgba(35,209,96,0.25);
+  animation: pulse 2s infinite;
+}
+.status-indicator.offline { background: var(--red); }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0; transform: scale(1.5); }
+}
+
+.status-text { font-size: 12px; color: var(--muted2); font-weight: 500; }
+
+/* ─── Main Content ─────────────────────────────────── */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+.topbar {
+  height: var(--topbar-h);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  flex-shrink: 0;
+}
+
+.topbar-left { display: flex; align-items: center; gap: 12px; }
+.topbar-left h2 { font-size: 16px; font-weight: 700; color: #fff; }
+
+.topbar-breadcrumb {
+  font-size: 12px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+
+.topbar-badge {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 12px;
+  color: var(--muted2);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.topbar-badge svg { width: 13px; height: 13px; }
+
+.content { flex: 1; overflow-y: auto; padding: 24px 28px; }
+
+/* ─── Panels ─────────────────────────────────── */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ─── Stats Grid ─────────────────────────────────── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color .2s;
+}
+.stat-card:hover { border-color: var(--border2); }
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--purple));
+  opacity: 0;
+  transition: opacity .2s;
+}
+.stat-card:hover::before { opacity: 1; }
+
+.stat-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+.stat-icon svg { width: 16px; height: 16px; }
+.stat-icon.green { background: var(--green-bg); color: var(--green); }
+.stat-icon.blue { background: rgba(59,158,221,0.12); color: var(--blue); }
+.stat-icon.purple { background: rgba(159,122,234,0.12); color: var(--purple); }
+.stat-icon.accent { background: var(--accent-glow); color: var(--accent); }
+.stat-icon.yellow { background: var(--yellow-bg); color: var(--yellow); }
+.stat-icon.red { background: var(--red-bg); color: var(--red); }
+
+.stat-value { font-size: 26px; font-weight: 700; color: #fff; line-height: 1; }
+.stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 5px; }
+
+/* ─── Cards ─────────────────────────────────── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  margin-bottom: 18px;
+}
+
+.card-header { margin-bottom: 18px; }
+.card-title { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+.card-desc { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+/* ─── Forms ─────────────────────────────────── */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.form-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.form-grid.cols-1 { grid-template-columns: 1fr; }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field.full { grid-column: 1 / -1; }
+
+.field label, .field-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--muted2);
+}
+
+.field input,
+.field select,
+.field textarea {
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  transition: border .2s, box-shadow .2s;
+  font-family: inherit;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.field input[type="color"] {
+  height: 38px;
+  padding: 3px 6px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.field select option { background: var(--card2); }
+.field textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+.field .hint { font-size: 11px; color: var(--muted); }
+
+.input-prefix {
+  display: flex;
+  align-items: stretch;
+}
+.input-prefix .prefix {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-right: none;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  padding: 9px 12px;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+}
+.input-prefix input {
+  flex: 1;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0 !important;
+}
+
+/* ─── Tabs ─────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+
+.tab-btn {
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted2);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all .15s;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  font-family: inherit;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: #fff; border-bottom-color: var(--accent); font-weight: 600; }
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ─── Toggle ─────────────────────────────────── */
+.toggle-list { display: flex; flex-direction: column; }
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.toggle-row:last-child { border-bottom: none; }
+
+.toggle-info .tname { font-size: 13px; font-weight: 600; color: var(--text); }
+.toggle-info .tdesc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+.toggle {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+}
+.toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+.toggle-track {
+  position: absolute;
+  inset: 0;
+  background: var(--border2);
+  border-radius: 11px;
+  cursor: pointer;
+  transition: background .2s;
+}
+.toggle-track::before {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  left: 3px;
+  top: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform .2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,.3);
+}
+.toggle input:checked + .toggle-track { background: var(--accent); }
+.toggle input:checked + .toggle-track::before { transform: translateX(18px); }
+
+/* ─── Buttons ─────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all .15s;
+  font-family: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.btn svg { width: 14px; height: 14px; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-hover); box-shadow: 0 4px 12px rgba(88,101,242,0.3); }
+.btn-ghost { background: transparent; color: var(--muted2); border: 1px solid var(--border); }
+.btn-ghost:hover { color: var(--text); border-color: var(--border2); }
+.btn-danger { background: var(--red-bg); color: var(--red); border: 1px solid rgba(237,66,69,.3); }
+.btn-danger:hover { background: var(--red); color: #fff; border-color: var(--red); }
+.btn-success { background: var(--green-bg); color: var(--green); border: 1px solid rgba(35,209,96,.25); }
+.btn-success:hover { background: var(--green); color: #fff; }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn:active { transform: scale(.98); }
+
+/* ─── Save bar ─────────────────────────────────── */
+.save-bar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 18px;
+  margin-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+/* ─── Command List ─────────────────────────────────── */
+.cmd-list { display: flex; flex-direction: column; gap: 8px; }
+
+.cmd-item {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: border-color .15s;
+  cursor: pointer;
+}
+.cmd-item:hover { border-color: var(--accent); }
+
+.cmd-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  min-width: 130px;
+}
+
+.cmd-preview {
+  flex: 1;
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cmd-actions { display: flex; gap: 6px; }
+
+/* ─── Badges ─────────────────────────────────── */
+.badge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  flex-shrink: 0;
+}
+.badge-owner { background: var(--red-bg); color: var(--red); }
+.badge-public { background: var(--green-bg); color: var(--green); }
+.badge-embed { background: var(--accent-glow); color: var(--accent); }
+
+/* ─── Live Preview ─────────────────────────────────── */
+.preview-wrap {
+  background: #36393f;
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  margin-top: 4px;
+  min-height: 60px;
+}
+
+.preview-embed {
+  border-left: 4px solid var(--accent);
+  padding-left: 12px;
+}
+.preview-embed .pe-title { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+.preview-embed .pe-desc { font-size: 13px; color: #dcddde; line-height: 1.5; }
+.preview-embed .pe-footer { font-size: 11px; color: #72767d; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.07); }
+
+.preview-text { font-size: 13px; color: #dcddde; }
+
+/* ─── Info box ─────────────────────────────────── */
+.info-box {
+  background: var(--accent-glow);
+  border: 1px solid rgba(88,101,242,.25);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: 12px;
+  color: #a5b4fc;
+  line-height: 1.6;
+}
+
+.info-box.warning {
+  background: var(--yellow-bg);
+  border-color: rgba(245,197,66,.25);
+  color: var(--yellow);
+}
+
+/* ─── Color grid ─────────────────────────────────── */
+.color-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 14px;
+}
+
+.color-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.color-field label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--muted2);
+}
+.color-preview-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.color-preview-row input[type="color"] {
+  width: 38px;
+  height: 38px;
+  padding: 2px 4px;
+  cursor: pointer;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--input-bg);
+  flex-shrink: 0;
+}
+.color-preview-row input[type="text"] {
+  flex: 1;
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  color: var(--text);
+  font-size: 12px;
+  font-family: monospace;
+  outline: none;
+  transition: border .2s;
+}
+.color-preview-row input[type="text"]:focus { border-color: var(--accent); }
+
+/* ─── Whitelist ─────────────────────────────────── */
+.id-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.id-chip {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-family: monospace;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.id-chip .remove {
+  cursor: pointer;
+  color: var(--muted);
+  transition: color .15s;
+  background: none;
+  border: none;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+  font-family: inherit;
+}
+.id-chip .remove:hover { color: var(--red); }
+.id-chip.owner { border-color: rgba(88,101,242,.3); color: var(--accent); }
+
+/* ─── Section label ─────────────────────────────────── */
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  color: var(--muted);
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ─── Code editor area ─────────────────────────────────── */
+.code-editor {
+  background: #0d0f14;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 12px;
+  color: #abb2bf;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  width: 100%;
+  transition: border .2s;
+}
+.code-editor:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+/* ─── Toast ─────────────────────────────────── */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 9999;
+}
+
+.toast {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+  animation: toast-in .25s ease;
+  min-width: 240px;
+  max-width: 340px;
+}
+.toast.success { border-color: rgba(35,209,96,.3); }
+.toast.success .toast-icon { color: var(--green); }
+.toast.error { border-color: rgba(237,66,69,.3); }
+.toast.error .toast-icon { color: var(--red); }
+.toast-icon { flex-shrink: 0; }
+.toast-icon svg { width: 16px; height: 16px; display: block; }
+.toast-msg { flex: 1; color: var(--text); }
+
+@keyframes toast-in {
+  from { transform: translateY(12px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+/* ─── Divider ─────────────────────────────────── */
+.divider { height: 1px; background: var(--border); margin: 18px 0; }
+
+/* ─── Quick-info list ─────────────────────────────────── */
+.info-list { display: flex; flex-direction: column; gap: 10px; }
+.info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--muted2);
+}
+.info-row svg { width: 15px; height: 15px; color: var(--accent); flex-shrink: 0; margin-top: 2px; }
+.info-row strong { color: var(--text); }
+
+/* ─── Modules Grid ─────────────────────────────────── */
+.modules-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.modules-enabled-count {
+  background: var(--accent-glow);
+  color: var(--accent);
+  border: 1px solid rgba(88,101,242,.25);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.modules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+.module-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: border-color .2s, box-shadow .2s;
+}
+.module-card:hover {
+  border-color: var(--border2);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+.module-card.disabled { opacity: .55; }
+.module-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.module-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+.module-card-body { flex: 1; }
+.module-name { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.module-desc { font-size: 12px; color: var(--muted2); line-height: 1.5; }
+.module-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.btn-configure {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  transition: color .15s;
+}
+.btn-configure:hover { color: #7983f5; text-decoration: underline; }
+.no-config { font-size: 12px; color: var(--muted); }
+.module-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  letter-spacing: .04em;
+}
+.module-badge.on { background: var(--green-bg); color: var(--green); }
+.module-badge.off { background: rgba(107,111,132,.15); color: var(--muted2); }
+
+/* ─── Toggle Switch ─────────────────────────────────── */
+.switch { position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+  position: absolute; cursor: pointer; inset: 0;
+  background: var(--border2); border-radius: 22px; transition: .2s;
+}
+.slider::before {
+  content: ''; position: absolute;
+  width: 16px; height: 16px; border-radius: 50%;
+  left: 3px; bottom: 3px;
+  background: white; transition: .2s;
+}
+.switch input:checked + .slider { background: var(--accent); }
+.switch input:checked + .slider::before { transform: translateX(18px); }
+
+/* ─── Toggle Rows ─────────────────────────────────── */
+.toggles-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 20px;
+}
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.toggle-row:last-child { border-bottom: none; }
+.toggle-info { flex: 1; }
+.toggle-name { font-size: 14px; font-weight: 500; color: var(--text); }
+.toggle-desc { font-size: 12px; color: var(--muted2); margin-top: 2px; }
+
+/* ─── Section Labels ─────────────────────────────────── */
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+
+/* ─── Quick Actions ─────────────────────────────────── */
+.quick-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.quick-action {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  transition: background .15s, border-color .15s;
+  text-align: left;
+}
+.quick-action:hover { background: var(--border); border-color: var(--border2); }
+.qa-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* ─── Overview Grid & Modules List ─────────────────────────────────── */
+.overview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 14px;
+}
+.overview-modules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.overview-module-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: var(--muted2);
+}
+
+/* ─── Sidebar Overrides for new layout ─────────────────────────────────── */
+.btn-signout {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  font-size: 12px;
+  padding: 7px 12px;
+  cursor: pointer;
+  width: 100%;
+  justify-content: center;
+  margin-top: 8px;
+  transition: background .15s, color .15s;
+}
+.btn-signout svg { width: 14px; height: 14px; }
+.btn-signout:hover { background: var(--red-bg); color: var(--red); border-color: var(--red); }
+
+.sidebar-footer {
+  padding: 16px;
+  border-top: 1px solid var(--border);
+  margin-top: auto;
+}
+.bot-status-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  padding: 6px 4px;
+}
+.status-text { font-size: 12px; color: var(--muted2); }
+
+/* ─── Topbar badge ─────────────────────────────────── */
+.topbar-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 12px;
+  color: var(--muted2);
+}
+.topbar-badge svg { width: 13px; height: 13px; color: var(--accent); }
+.topbar-left { display: flex; align-items: center; gap: 12px; }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+
+/* ─── Info box ─────────────────────────────────── */
+.info-box {
+  background: rgba(88,101,242,.07);
+  border: 1px solid rgba(88,101,242,.2);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 12.5px;
+  color: var(--muted2);
+}
+.info-box code { color: var(--accent); }
+
+/* ─── Divider ─────────────────────────────────── */
+.divider { height: 1px; background: var(--border); margin: 18px 0; }
+
+/* ─── Hint text ─────────────────────────────────── */
+.hint { font-size: 11.5px; color: var(--muted); margin-top: 5px; }
+
+/* ─── Input prefix ─────────────────────────────────── */
+.input-prefix { display: flex; align-items: center; }
+.input-prefix .prefix {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-right: none;
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  padding: 0 12px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  color: var(--muted2);
+  font-size: 15px;
+  font-weight: 600;
+}
+.input-prefix input {
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  flex: 1;
+}
+
+/* ─── Checkbox label ─────────────────────────────────── */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--muted2);
+}
+.checkbox-label input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+
+/* ─── Discord Browser ─────────────────────────────────── */
+.browser-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.browser-row:last-child { border-bottom: none; }
+.browser-row:hover { background: var(--card2); }
+.browser-type { color: var(--muted); min-width: 72px; font-size: 11px; }
+.browser-name { flex: 1; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.browser-id {
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 10px;
+  color: var(--muted2);
+  cursor: pointer;
+  user-select: all;
+  transition: border-color .15s, color .15s;
+}
+.browser-id:hover { border-color: var(--accent); color: var(--accent); }
+.role-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+/* ─── Snapshot stats ─────────────────────────────────── */
+.snapshot-stat { margin-bottom: 6px; font-size: 13px; color: var(--text); }
+.snapshot-stat strong { color: var(--muted2); }
+
+/* ─── form-grid cols-2 span ─────────────────────────────────── */
+.form-grid .field.cols-2 { grid-column: span 2; }
+
+/* ─── Info box ─────────────────────────────────── */
+.info-box {
+  padding: 10px 14px;
+  background: rgba(88,101,242,.08);
+  border: 1px solid rgba(88,101,242,.2);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--muted2);
+  line-height: 1.6;
+}
+.info-box code {
+  background: var(--input-bg);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--accent);
+  font-size: 12px;
+}
+
+/* ─── Responsive ─────────────────────────────────── */
+@media (max-width: 900px) {
+  .sidebar { width: 60px; }
+  .sidebar-brand, .nav-section-label, .nav-item span, .sidebar-footer .status-text { display: none; }
+  .nav-item { justify-content: center; padding: 10px; }
+  .sidebar-header { justify-content: center; padding: 12px; }
+  .topbar { padding: 0 16px; }
+  .content { padding: 16px; }
+  .form-grid { grid-template-columns: 1fr; }
+  .form-grid.cols-3 { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 600px) {
+  :root { --sidebar-w: 0px; }
+  .sidebar { display: none; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .form-grid.cols-3 { grid-template-columns: 1fr; }
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ─── Sidebar ─────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2"/>
+          <circle cx="12" cy="5" r="2"/>
+          <path d="M12 7v4"/>
+          <line x1="8" y1="16" x2="8" y2="16"/>
+          <line x1="16" y1="16" x2="16" y2="16"/>
+        </svg>
+      </div>
+      <div class="sidebar-brand">
+        <div class="brand-name">TitanBot</div>
+        <div class="brand-sub">Admin Panel</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <span class="nav-section-label">Overview</span>
+        <div class="nav-item active" data-panel="overview" onclick="showPanel('overview',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 4a1 1 0 011-1h14a1 1 0 011 1v3a1 1 0 01-1 1H3a1 1 0 01-1-1V4zm0 7a1 1 0 011-1h6a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm10 0a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1h-4a1 1 0 01-1-1v-5z"/></svg>
+          <span>Dashboard</span>
+        </div>
+        <div class="nav-item" data-panel="modules" onclick="showPanel('modules',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+          <span>Modules</span>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <span class="nav-section-label">Features</span>
+        <div class="nav-item" data-panel="music" onclick="showPanel('music',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z"/></svg>
+          <span>Music</span>
+        </div>
+        <div class="nav-item" data-panel="moderation" onclick="showPanel('moderation',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+          <span>Moderation</span>
+        </div>
+        <div class="nav-item" data-panel="logging" onclick="showPanel('logging',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>
+          <span>Logging</span>
+        </div>
+        <div class="nav-item" data-panel="welcome" onclick="showPanel('welcome',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/></svg>
+          <span>Welcome & Goodbye</span>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <span class="nav-section-label">Bot Config</span>
+        <div class="nav-item" data-panel="presence" onclick="showPanel('presence',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clip-rule="evenodd"/></svg>
+          <span>Presence & Status</span>
+        </div>
+        <div class="nav-item" data-panel="colors" onclick="showPanel('colors',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 000-2.828L13.485 5.1a2 2 0 00-2.828 0L10 5.757v8.486zM16 18H9.071l6-6H16a2 2 0 012 2v2a2 2 0 01-2 2z" clip-rule="evenodd"/></svg>
+          <span>Embed Colors</span>
+        </div>
+        <div class="nav-item" data-panel="economy" onclick="showPanel('economy',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"/></svg>
+          <span>Economy</span>
+        </div>
+        <div class="nav-item" data-panel="misc" onclick="showPanel('misc',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
+          <span>Misc Settings</span>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <span class="nav-section-label">Commands</span>
+        <div class="nav-item" data-panel="commands" onclick="showPanel('commands',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+          <span>Custom Commands</span>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <span class="nav-section-label">Per-Server</span>
+        <div class="nav-item" data-panel="guildconfig" onclick="showPanel('guildconfig',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
+          <span>Server Config</span>
+        </div>
+        <div class="nav-item" data-panel="tickets" onclick="showPanel('tickets',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 100 4v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2a2 2 0 100-4V6z"/></svg>
+          <span>Ticket Systems</span>
+        </div>
+        <div class="nav-item" data-panel="leveling" onclick="showPanel('leveling',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm6-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zm6-3a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/></svg>
+          <span>Leveling</span>
+        </div>
+        <div class="nav-item" data-panel="birthday" onclick="showPanel('birthday',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/></svg>
+          <span>Birthday</span>
+        </div>
+        <div class="nav-item" data-panel="serverbackup" onclick="showPanel('serverbackup',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293z"/></svg>
+          <span>Server Backup</span>
+        </div>
+        <div class="nav-item" data-panel="discordbrowser" onclick="showPanel('discordbrowser',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 9a2 2 0 114 0 2 2 0 01-4 0z"/><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a4 4 0 00-3.446 6.032l-2.261 2.26a1 1 0 101.414 1.415l2.261-2.261A4 4 0 1011 5z" clip-rule="evenodd"/></svg>
+          <span>Discord Browser</span>
+        </div>
+      </div>
+
+      <div class="nav-section" id="nav-unlimited" style="display:none">
+        <span class="nav-section-label">Unlimited</span>
+        <div class="nav-item" data-panel="whitelist" onclick="showPanel('whitelist',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/></svg>
+          <span>Whitelist</span>
+        </div>
+        <div class="nav-item" data-panel="setmoney" onclick="showPanel('setmoney',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/></svg>
+          <span>Set Balance</span>
+        </div>
+        <div class="nav-item" data-panel="rawconfig" onclick="showPanel('rawconfig',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>
+          <span>Raw Config</span>
+        </div>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="bot-status-pill">
+        <div class="status-indicator" id="status-dot"></div>
+        <span class="status-text" id="status-text">Checking...</span>
+      </div>
+      <button class="btn-signout" onclick="doLogout()">
+        <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd"/></svg>
+        Sign Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- ─── Main ─────────────────────────── -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <h2 id="panel-title">Dashboard</h2>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-badge" id="uptime-badge" style="display:none">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+          <span id="uptime-val">–</span>
+        </div>
+        <button class="btn btn-ghost" onclick="downloadDashboard()" title="Download dashboard as standalone HTML file" style="display:flex;align-items:center;gap:6px;font-size:12px;padding:6px 12px">
+          <svg viewBox="0 0 20 20" fill="currentColor" style="width:14px;height:14px"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+          Download
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ─── Overview ─────────────────── -->
+      <div class="panel active" id="panel-overview">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon green"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.05 3.636a1 1 0 010 1.414 7 7 0 000 9.9 1 1 0 11-1.414 1.414 9 9 0 010-12.728 1 1 0 011.414 0zm9.9 0a1 1 0 011.414 0 9 9 0 010 12.728 1 1 0 11-1.414-1.414 7 7 0 000-9.9 1 1 0 010-1.414zM7.879 6.464a1 1 0 010 1.414 3 3 0 000 4.243 1 1 0 11-1.415 1.414 5 5 0 010-7.07 1 1 0 011.415 0zm4.242 0a1 1 0 011.415 0 5 5 0 010 7.072 1 1 0 01-1.415-1.415 3 3 0 000-4.242 1 1 0 010-1.415zM10 9a1 1 0 011 1v.01a1 1 0 11-2 0V10a1 1 0 011-1z" clip-rule="evenodd"/></svg></div>
+            <div class="stat-value" id="s-status">–</div>
+            <div class="stat-label">Bot Status</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon blue"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/></svg></div>
+            <div class="stat-value" id="s-guilds">–</div>
+            <div class="stat-label">Servers</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon purple"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg></div>
+            <div class="stat-value" id="s-members">–</div>
+            <div class="stat-label">Total Members</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon accent"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg></div>
+            <div class="stat-value" id="s-uptime">–</div>
+            <div class="stat-label">Uptime</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon yellow"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/></svg></div>
+            <div class="stat-value" id="s-ping">–</div>
+            <div class="stat-label">Ping (ms)</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z"/><path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z"/><path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z"/></svg></div>
+            <div class="stat-value" id="s-db">–</div>
+            <div class="stat-label">Database</div>
+          </div>
+        </div>
+
+        <div class="overview-grid">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Quick Actions</div>
+            </div>
+            <div class="quick-actions">
+              <button class="quick-action" onclick="showPanel('modules', document.querySelector('[data-panel=modules]'))">
+                <span class="qa-icon" style="background:rgba(88,101,242,.15);color:#5865f2">🧩</span>
+                <span>Manage Modules</span>
+              </button>
+              <button class="quick-action" onclick="showPanel('music', document.querySelector('[data-panel=music]'))">
+                <span class="qa-icon" style="background:rgba(35,209,96,.15);color:#23d160">🎵</span>
+                <span>Music Settings</span>
+              </button>
+              <button class="quick-action" onclick="showPanel('commands', document.querySelector('[data-panel=commands]'))">
+                <span class="qa-icon" style="background:rgba(245,197,66,.15);color:#f5c542">💬</span>
+                <span>Custom Commands</span>
+              </button>
+              <button class="quick-action" onclick="showPanel('presence', document.querySelector('[data-panel=presence]'))">
+                <span class="qa-icon" style="background:rgba(59,158,221,.15);color:#3b9edd">🟢</span>
+                <span>Bot Presence</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Active Modules</div>
+              <div class="card-desc">Enabled features at a glance</div>
+            </div>
+            <div id="overview-modules-list" class="overview-modules"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Modules ─────────────────── -->
+      <div class="panel" id="panel-modules">
+        <div class="modules-header">
+          <div>
+            <div class="card-title" style="font-size:18px">All Modules</div>
+            <div class="card-desc" style="margin-top:4px">Enable or disable features. Click Configure to edit settings for each module.</div>
+          </div>
+          <div class="modules-enabled-count" id="modules-count">Loading...</div>
+        </div>
+        <div class="modules-grid" id="modules-grid">
+          <!-- injected by JS -->
+        </div>
+      </div>
+
+      <!-- ─── Music ─────────────────── -->
+      <div class="panel" id="panel-music">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🎵 Music Player</div>
+            <div class="card-desc">Configure how music works in your server. Commands: <code>/play</code> <code>/skip</code> <code>/stop</code> <code>/queue</code> <code>/pause</code> <code>/resume</code> <code>/nowplaying</code> <code>/volume</code></div>
+          </div>
+
+          <div class="section-label">Playback</div>
+          <div class="form-grid" style="margin-bottom:18px">
+            <div class="field">
+              <label>Default Volume (%)</label>
+              <input id="mu-volume" type="number" placeholder="100" min="1" max="200">
+              <div class="hint">Starting volume for new sessions (1–200)</div>
+            </div>
+            <div class="field">
+              <label>Max Queue Size</label>
+              <input id="mu-maxqueue" type="number" placeholder="100" min="1" max="1000">
+              <div class="hint">Maximum songs allowed in queue</div>
+            </div>
+            <div class="field">
+              <label>Max Song Duration (minutes, 0 = unlimited)</label>
+              <input id="mu-maxduration" type="number" placeholder="0" min="0">
+            </div>
+            <div class="field">
+              <label>DJ Role ID <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+              <input id="mu-djrole" placeholder="Leave blank to allow everyone">
+              <div class="hint">Only this role can control music. Leave blank for all members.</div>
+            </div>
+          </div>
+
+          <div class="section-label">Options</div>
+          <div class="toggles-list">
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-name">Allow Duplicate Songs</div>
+                <div class="toggle-desc">Let users queue the same song multiple times</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="mu-duplicates">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-name">Announce Now Playing</div>
+                <div class="toggle-desc">Post a now playing embed when each track starts</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="mu-announce" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-name">Auto-Leave When Empty</div>
+                <div class="toggle-desc">Leave voice channel after 30s when queue is empty</div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="mu-autoleave" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="save-bar">
+            <button class="btn btn-ghost" onclick="loadMusicConfig()">Reset</button>
+            <button class="btn btn-primary" onclick="saveMusicConfig()">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293z"/></svg>
+              Save Music Settings
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Moderation ─────────────────── -->
+      <div class="panel" id="panel-moderation">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🛡️ Moderation</div>
+            <div class="card-desc">Configure moderation behaviour. Commands: <code>/ban</code> <code>/kick</code> <code>/mute</code> <code>/warn</code> <code>/purge</code></div>
+          </div>
+
+          <div class="section-label">Settings</div>
+          <div class="form-grid" style="margin-bottom:18px">
+            <div class="field">
+              <label>Mod Log Channel ID <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+              <input id="mod-logchannel" placeholder="Channel ID for mod actions">
+            </div>
+            <div class="field">
+              <label>Mute Role ID <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+              <input id="mod-muterole" placeholder="Role ID to apply when muting">
+            </div>
+            <div class="field">
+              <label>Default Warn Threshold (auto-ban)</label>
+              <input id="mod-warnlimit" type="number" placeholder="0 = disabled" min="0">
+              <div class="hint">Number of warnings before auto-ban (0 to disable)</div>
+            </div>
+          </div>
+
+          <div class="section-label">Auto-Moderation</div>
+          <div class="toggles-list">
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-name">Anti-Spam</div>
+                <div class="toggle-desc">Delete messages sent too quickly by the same user</div>
+              </div>
+              <label class="switch"><input type="checkbox" id="mod-antispam"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-name">Anti-Invite</div>
+                <div class="toggle-desc">Delete messages containing Discord invite links</div>
+              </div>
+              <label class="switch"><input type="checkbox" id="mod-antiinvite"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="toggle-name">Anti-Link</div>
+                <div class="toggle-desc">Delete messages containing external URLs</div>
+              </div>
+              <label class="switch"><input type="checkbox" id="mod-antilink"><span class="slider"></span></label>
+            </div>
+          </div>
+
+          <div class="save-bar">
+            <button class="btn btn-ghost" onclick="loadModerationConfig()">Reset</button>
+            <button class="btn btn-primary" onclick="saveModerationConfig()">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293z"/></svg>
+              Save Moderation Settings
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Logging ─────────────────── -->
+      <div class="panel" id="panel-logging">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📋 Logging</div>
+            <div class="card-desc">Choose which events get logged and where they're sent.</div>
+          </div>
+
+          <div class="section-label">Log Channel</div>
+          <div class="form-grid" style="margin-bottom:18px">
+            <div class="field">
+              <label>Default Log Channel ID</label>
+              <input id="log-channel" placeholder="Channel ID for all logs">
+            </div>
+            <div class="field">
+              <label>Mod Action Log Channel ID <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+              <input id="log-modchannel" placeholder="Separate channel for mod actions">
+            </div>
+          </div>
+
+          <div class="section-label">Events to Log</div>
+          <div class="toggles-list">
+            <div class="toggle-row">
+              <div class="toggle-info"><div class="toggle-name">Message Delete</div><div class="toggle-desc">Log deleted messages</div></div>
+              <label class="switch"><input type="checkbox" id="log-msgdelete" checked><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info"><div class="toggle-name">Message Edit</div><div class="toggle-desc">Log edited messages (before/after)</div></div>
+              <label class="switch"><input type="checkbox" id="log-msgedit" checked><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info"><div class="toggle-name">Member Join</div><div class="toggle-desc">Log when members join the server</div></div>
+              <label class="switch"><input type="checkbox" id="log-join" checked><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info"><div class="toggle-name">Member Leave</div><div class="toggle-desc">Log when members leave or are kicked</div></div>
+              <label class="switch"><input type="checkbox" id="log-leave" checked><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info"><div class="toggle-name">Role Changes</div><div class="toggle-desc">Log when member roles are updated</div></div>
+              <label class="switch"><input type="checkbox" id="log-roles"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info"><div class="toggle-name">Voice Activity</div><div class="toggle-desc">Log voice channel joins and leaves</div></div>
+              <label class="switch"><input type="checkbox" id="log-voice"><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info"><div class="toggle-name">Bans & Unbans</div><div class="toggle-desc">Log ban and unban actions</div></div>
+              <label class="switch"><input type="checkbox" id="log-bans" checked><span class="slider"></span></label>
+            </div>
+            <div class="toggle-row">
+              <div class="toggle-info"><div class="toggle-name">Channel Changes</div><div class="toggle-desc">Log channel create, delete, rename</div></div>
+              <label class="switch"><input type="checkbox" id="log-channels"><span class="slider"></span></label>
+            </div>
+          </div>
+
+          <div class="save-bar">
+            <button class="btn btn-ghost" onclick="loadLoggingConfig()">Reset</button>
+            <button class="btn btn-primary" onclick="saveLoggingConfig()">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293z"/></svg>
+              Save Logging Settings
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Presence ─────────────────── -->
+      <div class="panel" id="panel-presence">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Presence & Status</div>
+            <div class="card-desc">Control what Discord shows beneath the bot's username in the member list.</div>
+          </div>
+          <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab(this,'pres','pres-status')">Online Status</button>
+            <button class="tab-btn" onclick="switchTab(this,'pres','pres-activity')">Activity Text</button>
+          </div>
+          <div class="tab-content active" id="pres-status">
+            <div class="form-grid cols-1">
+              <div class="field">
+                <label>Online Status</label>
+                <select id="p-status">
+                  <option value="online">🟢  Online</option>
+                  <option value="idle">🟡  Idle</option>
+                  <option value="dnd">🔴  Do Not Disturb</option>
+                  <option value="invisible">⚫  Invisible (appears offline)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="tab-content" id="pres-activity">
+            <div class="form-grid">
+              <div class="field">
+                <label>Activity Type</label>
+                <select id="p-atype">
+                  <option value="0">🎮  Playing</option>
+                  <option value="1">📺  Streaming</option>
+                  <option value="2">🎵  Listening to</option>
+                  <option value="3">👁️  Watching</option>
+                  <option value="5">🏆  Competing in</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Activity Text</label>
+                <input id="p-aname" placeholder="e.g. your SMP">
+              </div>
+            </div>
+          </div>
+          <div class="save-bar">
+            <button class="btn btn-ghost" onclick="loadConfig()">Reset</button>
+            <button class="btn btn-primary" onclick="savePresence()">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293z"/></svg>
+              Save Presence
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Colors ─────────────────── -->
+      <div class="panel" id="panel-colors">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Embed Colors</div>
+            <div class="card-desc">These colors are used in all bot embed messages throughout your server.</div>
+          </div>
+          <div class="color-grid" id="color-grid"></div>
+          <div class="divider"></div>
+          <div class="field">
+            <label>Embed Footer Text</label>
+            <input id="c-footer" placeholder="TitanBot">
+            <div class="hint">Shown at the bottom of all bot embeds.</div>
+          </div>
+          <div class="save-bar">
+            <button class="btn btn-ghost" onclick="loadConfig()">Reset</button>
+            <button class="btn btn-primary" onclick="saveColors()">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293z"/></svg>
+              Save Colors
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Economy ─────────────────── -->
+      <div class="panel" id="panel-economy">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Economy Settings</div>
+            <div class="card-desc">Configure your server's currency and economy system.</div>
+          </div>
+          <div class="section-label">Currency</div>
+          <div class="form-grid" style="margin-bottom:18px">
+            <div class="field"><label>Currency Name (singular)</label><input id="e-name" placeholder="coin"></div>
+            <div class="field"><label>Currency Name (plural)</label><input id="e-plural" placeholder="coins"></div>
+            <div class="field"><label>Currency Symbol</label><input id="e-symbol" placeholder="🪙" maxlength="4"></div>
+            <div class="field"><label>Starting Balance</label><input id="e-start" type="number" placeholder="0" min="0"></div>
+          </div>
+          <div class="section-label">Payouts</div>
+          <div class="form-grid cols-3" style="margin-bottom:18px">
+            <div class="field"><label>Daily Reward</label><input id="e-daily" type="number" placeholder="100" min="0"></div>
+            <div class="field"><label>Work Min</label><input id="e-wmin" type="number" placeholder="10" min="0"></div>
+            <div class="field"><label>Work Max</label><input id="e-wmax" type="number" placeholder="100" min="0"></div>
+            <div class="field"><label>Beg Min</label><input id="e-bmin" type="number" placeholder="5" min="0"></div>
+            <div class="field"><label>Beg Max</label><input id="e-bmax" type="number" placeholder="50" min="0"></div>
+            <div class="field"><label>Rob Success Rate (0–1)</label><input id="e-rob" type="number" step="0.01" placeholder="0.4" min="0" max="1"></div>
+          </div>
+          <div class="save-bar">
+            <button class="btn btn-ghost" onclick="loadConfig()">Reset</button>
+            <button class="btn btn-primary" onclick="saveEconomy()">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293z"/></svg>
+              Save Economy
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Welcome ─────────────────── -->
+      <div class="panel" id="panel-welcome">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Welcome & Goodbye Messages</div>
+            <div class="card-desc">Customise the messages sent when members join or leave the server.</div>
+          </div>
+          <div class="info-box" style="margin-bottom:18px">
+            Available placeholders: <code style="background:rgba(255,255,255,.07);padding:1px 6px;border-radius:3px">{user}</code> &nbsp; <code style="background:rgba(255,255,255,.07);padding:1px 6px;border-radius:3px">{server}</code> &nbsp; <code style="background:rgba(255,255,255,.07);padding:1px 6px;border-radius:3px">{memberCount}</code>
+          </div>
+          <div class="form-grid cols-1">
+            <div class="field">
+              <label>Welcome Message</label>
+              <textarea id="w-welcome" rows="4" placeholder="Welcome {user} to {server}! We now have {memberCount} members!"></textarea>
+            </div>
+            <div class="field">
+              <label>Goodbye Message</label>
+              <textarea id="w-goodbye" rows="4" placeholder="{user} has left the server. We now have {memberCount} members."></textarea>
+            </div>
+          </div>
+          <div class="save-bar">
+            <button class="btn btn-ghost" onclick="loadConfig()">Reset</button>
+            <button class="btn btn-primary" onclick="saveWelcome()">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293z"/></svg>
+              Save Messages
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Misc ─────────────────── -->
+      <div class="panel" id="panel-misc">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Misc Settings</div>
+            <div class="card-desc">General bot configuration options.</div>
+          </div>
+          <div class="form-grid">
+            <div class="field">
+              <label>Command Prefix</label>
+              <input id="m-prefix" placeholder="!" maxlength="5">
+              <div class="hint">Used for text-based commands (e.g. <code>!</code>help)</div>
+            </div>
+            <div class="field">
+              <label>Default Cooldown (seconds)</label>
+              <input id="m-cooldown" type="number" placeholder="3" min="0">
+            </div>
+          </div>
+          <div class="save-bar">
+            <button class="btn btn-ghost" onclick="loadConfig()">Reset</button>
+            <button class="btn btn-primary" onclick="saveMisc()">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293z"/></svg>
+              Save Settings
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Custom Commands ─────────────────── -->
+      <div class="panel" id="panel-commands">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Command Builder</div>
+            <div class="card-desc">Create custom <code style="background:var(--input-bg);padding:1px 6px;border-radius:4px;color:var(--accent)">!</code> prefix commands. They go live instantly — no restart needed.</div>
+          </div>
+          <div class="form-grid">
+            <div class="field">
+              <label>Command Name</label>
+              <div class="input-prefix">
+                <span class="prefix">!</span>
+                <input id="b-name" placeholder="mycommand" oninput="updatePreview()">
+              </div>
+              <div class="hint">Letters, numbers, _ and - only</div>
+            </div>
+            <div class="field">
+              <label>Response Type</label>
+              <select id="b-type" onchange="toggleEmbedFields(); updatePreview()">
+                <option value="text">💬  Plain Text</option>
+                <option value="embed">🪄  Rich Embed</option>
+              </select>
+            </div>
+          </div>
+          <div id="text-fields">
+            <div class="field">
+              <label>Response Message</label>
+              <textarea id="b-response" rows="3" placeholder="Your response... Use {user} for mention, {server} for server name" oninput="updatePreview()"></textarea>
+            </div>
+          </div>
+          <div id="embed-fields" style="display:none">
+            <div class="form-grid">
+              <div class="field">
+                <label>Embed Title</label>
+                <input id="b-etitle" placeholder="My Command Title" oninput="updatePreview()">
+              </div>
+              <div class="field">
+                <label>Embed Color</label>
+                <input type="color" id="b-ecolor" value="#5865F2" oninput="updatePreview()">
+              </div>
+            </div>
+            <div class="field">
+              <label>Embed Description</label>
+              <textarea id="b-edesc" rows="3" placeholder="Embed body text..." oninput="updatePreview()"></textarea>
+            </div>
+            <div class="field">
+              <label>Embed Footer</label>
+              <input id="b-efooter" placeholder="Footer text" oninput="updatePreview()">
+            </div>
+          </div>
+          <div class="field" style="margin-top:8px">
+            <label class="checkbox-label">
+              <input type="checkbox" id="b-owner">
+              <span>Owner only (restrict to bot owners)</span>
+            </label>
+          </div>
+          <div class="card" style="background:var(--input-bg);border:1px dashed var(--border2);margin-top:8px">
+            <div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:10px;font-weight:600">Preview</div>
+            <div id="preview-box"><span style="color:var(--muted);font-size:13px">Fill in the form above to see a preview...</span></div>
+          </div>
+          <div class="save-bar">
+            <button class="btn btn-ghost" onclick="clearBuilder()">Clear</button>
+            <button class="btn btn-primary" onclick="saveCommand()">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293z"/></svg>
+              Save Command
+            </button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <div class="card-header">
+            <div class="card-title">Saved Commands</div>
+          </div>
+          <div id="cmd-list"></div>
+        </div>
+      </div>
+
+      <!-- ─── Server Config (per-guild) ─────────────────── -->
+      <div class="panel" id="panel-guildconfig">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">⚙️ Server Config</div>
+            <div class="card-desc">Configure welcome, goodbye, logging, and role settings per server. Uses the HEAD BOT to populate dropdowns automatically.</div>
+          </div>
+          <div class="field" style="margin-bottom:18px">
+            <label>Select Server</label>
+            <select id="gc-guild-sel"><option value="">Loading…</option></select>
+          </div>
+          <div id="gc-main" style="display:none">
+            <div class="section-label">Welcome & Goodbye</div>
+            <div class="form-grid" style="margin-bottom:18px">
+              <div class="field"><label>Welcome Channel</label><select id="gc-welcome-ch"></select></div>
+              <div class="field"><label>Goodbye Channel</label><select id="gc-goodbye-ch"></select></div>
+              <div class="field cols-2"><label>Welcome Message <small style="color:var(--muted)">({user} {server} {memberCount})</small></label><textarea id="gc-welcome-msg" rows="2" placeholder="Welcome {user} to {server}!"></textarea></div>
+              <div class="field cols-2"><label>Goodbye Message</label><textarea id="gc-goodbye-msg" rows="2" placeholder="{user} has left {server}."></textarea></div>
+            </div>
+            <div class="section-label">Logging</div>
+            <div class="form-grid" style="margin-bottom:18px">
+              <div class="field"><label>General Log Channel</label><select id="gc-log-ch"></select></div>
+              <div class="field"><label>Mod Log Channel</label><select id="gc-modlog-ch"></select></div>
+            </div>
+            <div class="section-label">Roles</div>
+            <div class="form-grid" style="margin-bottom:18px">
+              <div class="field"><label>Mod Role</label><select id="gc-mod-role"></select></div>
+              <div class="field"><label>Admin Role</label><select id="gc-admin-role"></select></div>
+              <div class="field"><label>Auto-Role (on join)</label><select id="gc-autorole"></select></div>
+            </div>
+            <div class="section-label">Options</div>
+            <div class="toggles-list">
+              <div class="toggle-row">
+                <div class="toggle-info"><div class="toggle-name">DM user on ticket close</div><div class="toggle-desc">Send a DM with a transcript when a ticket is closed</div></div>
+                <label class="switch"><input type="checkbox" id="gc-dm-close" checked><span class="slider"></span></label>
+              </div>
+            </div>
+            <div class="save-bar">
+              <button class="btn btn-ghost" onclick="loadGuildConfigData()">Reset</button>
+              <button class="btn btn-primary" onclick="saveGuildConfig()">
+                <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293z"/></svg>
+                Save Server Config
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Ticket Systems ─────────────────── -->
+      <div class="panel" id="panel-tickets">
+        <div class="card" id="tp-form-card">
+          <div class="card-header">
+            <div class="card-title" id="tp-form-title">➕ Create Ticket Panel</div>
+            <div class="card-desc">Each panel sends an embed with a button to a channel. Users click to open a ticket in its own private channel.</div>
+          </div>
+          <div class="field" style="margin-bottom:18px">
+            <label>Select Server</label>
+            <select id="tp-guild-sel"><option value="">Loading…</option></select>
+          </div>
+          <div id="tp-main" style="display:none">
+            <div class="form-grid" style="margin-bottom:18px">
+              <div class="field"><label>Panel Name <span style="color:var(--red)">*</span></label><input id="tp-f-name" placeholder="e.g. General Support"></div>
+              <div class="field"><label>Button Label</label><input id="tp-f-btn" placeholder="Create Ticket"></div>
+              <div class="field cols-2"><label>Panel Message (shown in the embed)</label><textarea id="tp-f-msg" rows="2" placeholder="Click below to open a support ticket."></textarea></div>
+              <div class="field"><label>Deploy Channel (where embed is sent)</label><select id="tp-f-channel"></select></div>
+              <div class="field"><label>Ticket Category (tickets open here)</label><select id="tp-f-category"></select></div>
+              <div class="field"><label>Staff Role (gets pinged + access)</label><select id="tp-f-staffrole"></select></div>
+              <div class="field"><label>Max Tickets per User</label><input id="tp-f-max" type="number" value="3" min="1" max="20"></div>
+            </div>
+            <div class="toggles-list" style="margin-bottom:18px">
+              <div class="toggle-row">
+                <div class="toggle-info"><div class="toggle-name">DM user on close</div><div class="toggle-desc">Send a DM when their ticket is closed</div></div>
+                <label class="switch"><input type="checkbox" id="tp-f-dm" checked><span class="slider"></span></label>
+              </div>
+            </div>
+            <div class="save-bar">
+              <button class="btn btn-ghost" id="tp-cancel-btn" style="display:none" onclick="clearTicketForm()">Cancel Edit</button>
+              <button class="btn btn-primary" onclick="saveTicketPanel()">
+                <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293z"/></svg>
+                Save Panel
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:16px" id="tp-list-card">
+          <div class="card-header"><div class="card-title">Saved Panels</div></div>
+          <div id="tp-panel-list"><div style="color:var(--muted);font-size:13px">Select a server above to view panels.</div></div>
+        </div>
+      </div>
+
+      <!-- ─── Leveling ─────────────────── -->
+      <div class="panel" id="panel-leveling">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">⭐ Leveling</div>
+            <div class="card-desc">Configure the XP and level-up system per server.</div>
+          </div>
+          <div class="field" style="margin-bottom:18px">
+            <label>Select Server</label>
+            <select id="lv-guild-sel"><option value="">Loading…</option></select>
+          </div>
+          <div id="lv-main" style="display:none">
+            <div class="section-label">XP Settings</div>
+            <div class="form-grid" style="margin-bottom:18px">
+              <div class="field"><label>Min XP per message</label><input id="lv-xp-min" type="number" placeholder="10" min="0" max="500"></div>
+              <div class="field"><label>Max XP per message</label><input id="lv-xp-max" type="number" placeholder="25" min="0" max="500"></div>
+              <div class="field"><label>XP Cooldown (seconds)</label><input id="lv-cooldown" type="number" placeholder="60" min="0"></div>
+              <div class="field"><label>Level-up announce channel</label><select id="lv-levelup-ch"></select><div class="hint">Leave blank to announce in the same channel</div></div>
+            </div>
+            <div class="section-label">Options</div>
+            <div class="toggles-list">
+              <div class="toggle-row">
+                <div class="toggle-info"><div class="toggle-name">Enable Leveling</div><div class="toggle-desc">Turn the XP system on or off for this server</div></div>
+                <label class="switch"><input type="checkbox" id="lv-enabled" checked><span class="slider"></span></label>
+              </div>
+              <div class="toggle-row">
+                <div class="toggle-info"><div class="toggle-name">Announce Level-Ups</div><div class="toggle-desc">Post a message when a user levels up</div></div>
+                <label class="switch"><input type="checkbox" id="lv-announce" checked><span class="slider"></span></label>
+              </div>
+            </div>
+            <div class="save-bar">
+              <button class="btn btn-ghost" onclick="loadLevelingData()">Reset</button>
+              <button class="btn btn-primary" onclick="saveLeveling()">
+                <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293z"/></svg>
+                Save Leveling
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Birthday ─────────────────── -->
+      <div class="panel" id="panel-birthday">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🎂 Birthday</div>
+            <div class="card-desc">Configure birthday announcements per server.</div>
+          </div>
+          <div class="field" style="margin-bottom:18px">
+            <label>Select Server</label>
+            <select id="bd-guild-sel"><option value="">Loading…</option></select>
+          </div>
+          <div id="bd-main" style="display:none">
+            <div class="form-grid" style="margin-bottom:18px">
+              <div class="field"><label>Birthday Announce Channel</label><select id="bd-channel"></select></div>
+              <div class="field"><label>Birthday Role (given for 24 hrs)</label><select id="bd-role"></select></div>
+              <div class="field cols-2"><label>Birthday Message <small style="color:var(--muted)">({user} {server})</small></label><input id="bd-message" placeholder="🎂 Happy Birthday {user}! 🎉"></div>
+            </div>
+            <div class="save-bar">
+              <button class="btn btn-ghost" onclick="loadBirthdayData()">Reset</button>
+              <button class="btn btn-primary" onclick="saveBirthday()">
+                <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293z"/></svg>
+                Save Birthday Settings
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Server Backup ─────────────────── -->
+      <div class="panel" id="panel-serverbackup">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">💾 Server Backup</div>
+            <div class="card-desc">Save and restore your entire Discord server structure (roles, categories, channels) using <code>!saveserver</code> and <code>!loadserver</code> in Discord.</div>
+          </div>
+          <div class="field" style="margin-bottom:18px">
+            <label>Select Server</label>
+            <select id="sb-guild-sel"><option value="">Loading…</option></select>
+          </div>
+          <div id="sb-main" style="display:none">
+            <div class="info-box" style="margin-bottom:18px">
+              <strong>How it works:</strong> Run <code>!saveserver</code> in your Discord server to create a snapshot. Run <code>!loadserver</code> to restore from the last snapshot. Both commands require bot owner access.
+            </div>
+            <div class="section-label">Last Snapshot</div>
+            <div id="sb-info" style="margin-bottom:18px;padding:12px;background:var(--input-bg);border-radius:var(--radius-sm);border:1px solid var(--border)">
+              <div style="color:var(--muted)">Select a server to see snapshot info.</div>
+            </div>
+            <div class="snapshot-actions" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+              <button class="btn btn-primary" onclick="sbInstruction('save')">
+                <svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293z"/></svg>
+                How to Save
+              </button>
+              <button class="btn btn-ghost" onclick="sbInstruction('restore')">
+                <svg viewBox="0 0 20 20" fill="currentColor" style="width:16px;height:16px"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/></svg>
+                How to Restore
+              </button>
+              <button class="btn btn-ghost" onclick="loadSnapshotInfo()">↻ Refresh</button>
+            </div>
+            <div id="sb-cmd-hint" style="display:none;padding:10px 14px;background:var(--input-bg);border-left:3px solid var(--accent);border-radius:4px;font-family:monospace;font-size:13px;color:var(--accent)"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Discord Browser ─────────────────── -->
+      <div class="panel" id="panel-discordbrowser">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🔍 Discord Browser</div>
+            <div class="card-desc">Browse your servers' channels and roles. Click any ID to copy it — useful when setting up other features.</div>
+          </div>
+          <div class="field" style="margin-bottom:18px">
+            <label>Select Server</label>
+            <select id="db-guild-sel"><option value="">Loading…</option></select>
+          </div>
+          <div id="db-guild-detail" style="display:none">
+            <div class="card-title" style="margin-bottom:14px;font-size:15px" id="db-guild-name"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+              <div>
+                <div class="section-label" style="margin-bottom:10px">Channels <small style="color:var(--muted)">(click ID to copy)</small></div>
+                <div id="db-channels" style="max-height:400px;overflow-y:auto"></div>
+              </div>
+              <div>
+                <div class="section-label" style="margin-bottom:10px">Roles <small style="color:var(--muted)">(click ID to copy)</small></div>
+                <div id="db-roles" style="max-height:400px;overflow-y:auto"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Whitelist ─────────────────── -->
+      <div class="panel" id="panel-whitelist">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Whitelist</div>
+            <div class="card-desc">Manage users who have Unlimited access to this dashboard.</div>
+          </div>
+          <div class="section-label">Bot Owners</div>
+          <div id="wl-owners" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px"></div>
+          <div class="section-label">Whitelisted Users</div>
+          <div id="wl-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px"></div>
+          <div class="form-grid cols-1">
+            <div class="field">
+              <label>Add / Remove Discord User ID</label>
+              <div style="display:flex;gap:8px">
+                <input id="wl-id" placeholder="Discord User ID (17–19 digits)" style="flex:1">
+                <button class="btn btn-primary btn-sm" onclick="wlAction('add')">Add</button>
+                <button class="btn btn-danger btn-sm" onclick="wlAction('remove')">Remove</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Set Money ─────────────────── -->
+      <div class="panel" id="panel-setmoney">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Set Balance</div>
+            <div class="card-desc">Override a user's wallet or bank balance directly.</div>
+          </div>
+          <div class="form-grid">
+            <div class="field"><label>Discord User ID</label><input id="sm-id" placeholder="User ID"></div>
+            <div class="field"><label>Balance Type</label><select id="sm-type"><option value="wallet">Wallet</option><option value="bank">Bank</option></select></div>
+            <div class="field"><label>New Amount</label><input id="sm-amt" type="number" placeholder="0" min="0"></div>
+          </div>
+          <div class="save-bar">
+            <button class="btn btn-primary" onclick="setBalance()">Set Balance</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Raw Config ─────────────────── -->
+      <div class="panel" id="panel-rawconfig">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Raw Config Editor</div>
+            <div class="card-desc">⚠️ Advanced — edit the underlying JSON config directly. Invalid JSON will be rejected.</div>
+          </div>
+          <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab(this,'rawconfig','rc-tab-overrides')">Bot Overrides</button>
+            <button class="tab-btn" onclick="switchTab(this,'rawconfig','rc-tab-cmds')">Custom Commands</button>
+            <button class="tab-btn" onclick="switchTab(this,'rawconfig','rc-tab-guild')">Global Guild Config</button>
+          </div>
+          <div class="tab-content active" id="rc-tab-overrides">
+            <div class="field"><textarea id="rc-overrides" rows="16" style="font-family:monospace;font-size:12px"></textarea></div>
+            <div class="save-bar"><button class="btn btn-primary" onclick="saveRC('fileOverrides','rc-overrides')">Save Overrides</button></div>
+          </div>
+          <div class="tab-content" id="rc-tab-cmds">
+            <div class="field"><textarea id="rc-cmds" rows="16" style="font-family:monospace;font-size:12px"></textarea></div>
+            <div class="save-bar"><button class="btn btn-primary" onclick="saveRC('customCommands','rc-cmds')">Save Commands</button></div>
+          </div>
+          <div class="tab-content" id="rc-tab-guild">
+            <div class="field"><textarea id="rc-gcfg" rows="16" style="font-family:monospace;font-size:12px"></textarea></div>
+            <div class="save-bar"><button class="btn btn-primary" onclick="saveRC('globalGuildConfig','rc-gcfg')">Save Guild Config</button></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+/* ─── State ─────────────────────────────── */
+let currentCfg = {};
+let modulesState = {};
+
+/* ─── Module definitions ─────────────────────────────── */
+const MODULES = [
+  { id: 'moderation', name: 'Moderation', icon: '🛡️', color: '#9B59B6', desc: 'Kick, ban, mute, warn, purge and more', panel: 'moderation' },
+  { id: 'automod', name: 'Auto-Moderation', icon: '🤖', color: '#E74C3C', desc: 'Automatically detect and remove spam, invites, links', panel: null },
+  { id: 'logging', name: 'Logging', icon: '📋', color: '#3B9EDD', desc: 'Log server events to a dedicated channel', panel: 'logging' },
+  { id: 'welcome', name: 'Welcome & Goodbye', icon: '👋', color: '#23D160', desc: 'Greet new members and farewell departing ones', panel: 'welcome' },
+  { id: 'tickets', name: 'Tickets', icon: '🎫', color: '#F5C542', desc: 'Support ticket system for your community', panel: null },
+  { id: 'economy', name: 'Economy', icon: '💰', color: '#F1C40F', desc: 'Currency, wallet, daily rewards, shop and gambling', panel: 'economy' },
+  { id: 'leveling', name: 'Leveling', icon: '⭐', color: '#FF6B6B', desc: 'XP system with level-up notifications and role rewards', panel: null },
+  { id: 'music', name: 'Music Player', icon: '🎵', color: '#5865F2', desc: 'Play YouTube music in voice channels', panel: 'music' },
+  { id: 'reactionroles', name: 'Reaction Roles', icon: '🎭', color: '#9F7AEA', desc: 'Let members assign themselves roles via reactions', panel: null },
+  { id: 'verification', name: 'Verification', icon: '✅', color: '#23D160', desc: 'Verify members before giving them full access', panel: null },
+  { id: 'giveaways', name: 'Giveaways', icon: '🎉', color: '#FF69B4', desc: 'Host and manage server giveaways easily', panel: null },
+  { id: 'joinToCreate', name: 'Join to Create', icon: '🔊', color: '#3B9EDD', desc: 'Auto-create temporary voice channels on join', panel: null },
+  { id: 'birthday', name: 'Birthday', icon: '🎂', color: '#E91E63', desc: 'Celebrate member birthdays with announcements', panel: null },
+  { id: 'serverstats', name: 'Server Stats', icon: '📊', color: '#3498DB', desc: 'Display live server statistics in channels', panel: null },
+];
+
+/* ─── Init ─────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  buildColorGrid();
+  loadSession();
+  loadConfig();
+  loadCommands();
+  loadModules();
+  loadMusicConfig();
+  pollStatus();
+  setInterval(pollStatus, 15000);
+});
+
+/* ─── Navigation ─────────────────────────────── */
+const panelTitles = {
+  overview: 'Dashboard',
+  modules: 'Modules',
+  music: 'Music Player',
+  moderation: 'Moderation',
+  logging: 'Logging',
+  presence: 'Presence & Status',
+  colors: 'Embed Colors',
+  economy: 'Economy Settings',
+  welcome: 'Welcome & Goodbye',
+  misc: 'Misc Settings',
+  commands: 'Custom Commands',
+  whitelist: 'Whitelist',
+  setmoney: 'Set Balance',
+  rawconfig: 'Raw Config Editor',
+  guildconfig: 'Server Config',
+  tickets: 'Ticket Systems',
+  leveling: 'Leveling',
+  birthday: 'Birthday',
+  serverbackup: 'Server Backup',
+  discordbrowser: 'Discord Browser',
+};
+
+const _panelInited = new Set();
+
+function showPanel(id, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const panel = document.getElementById('panel-' + id);
+  if (panel) panel.classList.add('active');
+  if (el) el.classList.add('active');
+  document.getElementById('panel-title').textContent = panelTitles[id] || id;
+
+  if (id === 'commands') loadCommands();
+  if (id === 'whitelist') loadWhitelist();
+  if (id === 'rawconfig') loadRC();
+  if (id === 'modules') renderModulesGrid();
+  if (id === 'moderation') loadModerationConfig();
+  if (id === 'logging') loadLoggingConfig();
+
+  if (!_panelInited.has(id)) {
+    _panelInited.add(id);
+    if (id === 'guildconfig')    initGuildConfig();
+    if (id === 'tickets')        initTicketSystems();
+    if (id === 'leveling')       initLeveling();
+    if (id === 'birthday')       initBirthday();
+    if (id === 'serverbackup')   initServerBackup();
+    if (id === 'discordbrowser') initDiscordBrowser();
+  }
+}
+
+function switchTab(btn, group, contentId) {
+  btn.closest('.tabs').querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const panel = document.getElementById('panel-' + group);
+  if (panel) panel.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  const content = document.getElementById(contentId);
+  if (content) content.classList.add('active');
+}
+
+/* ─── Toast ─────────────────────────────── */
+function toast(msg, type = 'success') {
+  const container = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  const checkIcon = `<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>`;
+  const crossIcon = `<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>`;
+  el.innerHTML = `<span class="toast-icon">${type === 'success' ? checkIcon : crossIcon}</span><span class="toast-msg">${msg}</span>`;
+  container.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; setTimeout(() => el.remove(), 300); }, 3200);
+}
+
+/* ─── API ─────────────────────────────── */
+const _BASE = (window.__API_ORIGIN || '') + '/admin/api';
+async function api(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' }, credentials: 'include' };
+  if (body !== undefined) opts.body = JSON.stringify(body);
+  const res = await fetch(_BASE + path, opts);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
+
+/* ─── Status polling ─────────────────────────────── */
+async function pollStatus() {
+  try {
+    const d = await api('GET', '/status');
+    const dot = document.getElementById('status-dot');
+    const text = document.getElementById('status-text');
+    dot.className = 'status-indicator ' + (d.online ? 'online' : 'offline');
+    text.textContent = d.online ? 'Bot Online' : 'Bot Offline';
+    el('s-status').textContent = d.online ? '🟢 Online' : '🔴 Offline';
+    el('s-guilds').textContent = d.guilds;
+    el('s-members').textContent = (d.users || 0).toLocaleString();
+    el('s-uptime').textContent = fmtUptime(d.uptime);
+    el('s-ping').textContent = d.ping >= 0 ? d.ping + 'ms' : 'N/A';
+    el('s-db').textContent = d.db === 'postgresql' ? '🟢 PostgreSQL' : '🟡 Memory';
+    const uptimeBadge = document.getElementById('uptime-badge');
+    if (uptimeBadge) { uptimeBadge.style.display = 'flex'; document.getElementById('uptime-val').textContent = fmtUptime(d.uptime); }
+  } catch { /* silent */ }
+}
+
+function fmtUptime(s) {
+  if (s < 60) return s + 's';
+  if (s < 3600) return Math.floor(s / 60) + 'm ' + (s % 60) + 's';
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+  return h + 'h ' + m + 'm';
+}
+
+function el(id) { return document.getElementById(id) || { textContent: '' }; }
+
+/* ─── Session ─────────────────────────────── */
+async function loadSession() {
+  try {
+    const d = await api('GET', '/session');
+    if (d.unlimited) {
+      const section = document.getElementById('nav-unlimited');
+      if (section) section.style.display = 'block';
+    }
+  } catch { /* silent */ }
+}
+
+/* ─── Modules ─────────────────────────────── */
+async function loadModules() {
+  try {
+    const d = await api('GET', '/modules');
+    modulesState = d.modules || {};
+    renderModulesGrid();
+    renderOverviewModules();
+  } catch { /* silent */ }
+}
+
+function renderModulesGrid() {
+  const grid = document.getElementById('modules-grid');
+  const countEl = document.getElementById('modules-count');
+  if (!grid) return;
+
+  const enabledCount = MODULES.filter(m => modulesState[m.id] !== false).length;
+  if (countEl) countEl.textContent = `${enabledCount} / ${MODULES.length} enabled`;
+
+  grid.innerHTML = MODULES.map(m => {
+    const enabled = modulesState[m.id] !== false;
+    return `
+      <div class="module-card ${enabled ? 'enabled' : 'disabled'}">
+        <div class="module-card-top">
+          <div class="module-icon" style="background:${m.color}22;color:${m.color}">${m.icon}</div>
+          <label class="switch">
+            <input type="checkbox" ${enabled ? 'checked' : ''} onchange="toggleModule('${m.id}', this.checked)">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="module-card-body">
+          <div class="module-name">${m.name}</div>
+          <div class="module-desc">${m.desc}</div>
+        </div>
+        <div class="module-card-footer">
+          ${m.panel ? `<button class="btn-configure" onclick="showPanel('${m.panel}', document.querySelector('[data-panel=${m.panel}]'))">Configure →</button>` : `<span class="no-config">No extra settings</span>`}
+          <span class="module-badge ${enabled ? 'on' : 'off'}">${enabled ? 'ON' : 'OFF'}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderOverviewModules() {
+  const list = document.getElementById('overview-modules-list');
+  if (!list) return;
+  const active = MODULES.filter(m => modulesState[m.id] !== false);
+  list.innerHTML = active.map(m => `
+    <div class="overview-module-pill">
+      <span>${m.icon}</span>
+      <span>${m.name}</span>
+    </div>
+  `).join('');
+}
+
+async function toggleModule(id, enabled) {
+  try {
+    modulesState[id] = enabled;
+    await api('POST', '/modules', { modules: { [id]: enabled } });
+    renderModulesGrid();
+    renderOverviewModules();
+    toast(`${MODULES.find(m => m.id === id)?.name} ${enabled ? 'enabled' : 'disabled'}`);
+  } catch (e) {
+    toast(e.message, 'error');
+    loadModules();
+  }
+}
+
+/* ─── Config load/save ─────────────────────────────── */
+async function loadConfig() {
+  try {
+    currentCfg = await api('GET', '/config');
+    const c = currentCfg;
+    if (c.presence) {
+      if (c.presence.status) setVal('p-status', c.presence.status);
+      const act = c.presence.activities?.[0];
+      if (act) { setVal('p-atype', act.type ?? 3); setVal('p-aname', act.name || ''); }
+    }
+    if (c.embeds?.colors) {
+      const ec = c.embeds.colors;
+      colorFields.forEach(({ key }) => {
+        const val = ec[key];
+        if (val) {
+          const ci = document.getElementById('cc-' + key);
+          const ti = document.getElementById('ct-' + key);
+          if (ci) ci.value = val;
+          if (ti) ti.value = val;
+        }
+      });
+    }
+    if (c.embeds?.footer?.text) setVal('c-footer', c.embeds.footer.text);
+    if (c.economy) {
+      const e = c.economy;
+      if (e.currency?.name) setVal('e-name', e.currency.name);
+      if (e.currency?.namePlural) setVal('e-plural', e.currency.namePlural);
+      if (e.currency?.symbol) setVal('e-symbol', e.currency.symbol);
+      if (e.starting !== undefined) setVal('e-start', e.starting);
+      if (e.rewards?.daily?.min !== undefined) setVal('e-daily', e.rewards.daily.min);
+      if (e.rewards?.work?.min !== undefined) setVal('e-wmin', e.rewards.work.min);
+      if (e.rewards?.work?.max !== undefined) setVal('e-wmax', e.rewards.work.max);
+      if (e.rewards?.beg?.min !== undefined) setVal('e-bmin', e.rewards.beg.min);
+      if (e.rewards?.beg?.max !== undefined) setVal('e-bmax', e.rewards.beg.max);
+      if (e.rob?.successRate !== undefined) setVal('e-rob', e.rob.successRate);
+    }
+    if (c.welcome) {
+      if (c.welcome.message) setVal('w-welcome', c.welcome.message);
+      if (c.welcome.goodbyeMessage) setVal('w-goodbye', c.welcome.goodbyeMessage);
+    }
+    if (c.prefix) setVal('m-prefix', c.prefix);
+    if (c.cooldown !== undefined) setVal('m-cooldown', c.cooldown);
+  } catch (e) { toast('Failed to load config: ' + e.message, 'error'); }
+}
+
+function setVal(id, val) { const e = document.getElementById(id); if (e) e.value = val; }
+function getCheck(id) { return document.getElementById(id)?.checked ?? false; }
+function setCheck(id, val) { const e = document.getElementById(id); if (e) e.checked = !!val; }
+
+/* ─── Music config ─────────────────────────────── */
+async function loadMusicConfig() {
+  try {
+    const d = await api('GET', '/music-config');
+    const m = d.music || {};
+    setVal('mu-volume', m.defaultVolume ?? 100);
+    setVal('mu-maxqueue', m.maxQueueSize ?? 100);
+    setVal('mu-maxduration', m.maxDuration ?? 0);
+    setVal('mu-djrole', m.djRole ?? '');
+    setCheck('mu-duplicates', m.allowDuplicates ?? false);
+    setCheck('mu-announce', m.announceNowPlaying ?? true);
+    setCheck('mu-autoleave', m.autoLeave ?? true);
+  } catch { /* silent */ }
+}
+
+async function saveMusicConfig() {
+  try {
+    await api('POST', '/music-config', {
+      music: {
+        defaultVolume: parseInt(document.getElementById('mu-volume')?.value || '100'),
+        maxQueueSize: parseInt(document.getElementById('mu-maxqueue')?.value || '100'),
+        maxDuration: parseInt(document.getElementById('mu-maxduration')?.value || '0'),
+        djRole: document.getElementById('mu-djrole')?.value?.trim() || '',
+        allowDuplicates: getCheck('mu-duplicates'),
+        announceNowPlaying: getCheck('mu-announce'),
+        autoLeave: getCheck('mu-autoleave'),
+      }
+    });
+    toast('Music settings saved!');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+/* ─── Moderation config ─────────────────────────────── */
+async function loadModerationConfig() {
+  try {
+    const c = await api('GET', '/config');
+    const m = c.moderation || {};
+    setVal('mod-logchannel', m.logChannel ?? '');
+    setVal('mod-muterole', m.muteRole ?? '');
+    setVal('mod-warnlimit', m.warnThreshold ?? 0);
+    setCheck('mod-antispam', m.autoMod?.antiSpam ?? false);
+    setCheck('mod-antiinvite', m.autoMod?.antiInvite ?? false);
+    setCheck('mod-antilink', m.autoMod?.antiLink ?? false);
+  } catch { /* silent */ }
+}
+
+async function saveModerationConfig() {
+  try {
+    await api('POST', '/config', {
+      moderation: {
+        logChannel: document.getElementById('mod-logchannel')?.value?.trim() || '',
+        muteRole: document.getElementById('mod-muterole')?.value?.trim() || '',
+        warnThreshold: parseInt(document.getElementById('mod-warnlimit')?.value || '0'),
+        autoMod: {
+          antiSpam: getCheck('mod-antispam'),
+          antiInvite: getCheck('mod-antiinvite'),
+          antiLink: getCheck('mod-antilink'),
+        }
+      }
+    });
+    toast('Moderation settings saved!');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+/* ─── Logging config ─────────────────────────────── */
+async function loadLoggingConfig() {
+  try {
+    const c = await api('GET', '/config');
+    const l = c.logging || {};
+    setVal('log-channel', l.channel ?? '');
+    setVal('log-modchannel', l.modChannel ?? '');
+    setCheck('log-msgdelete', l.events?.messageDelete ?? true);
+    setCheck('log-msgedit', l.events?.messageEdit ?? true);
+    setCheck('log-join', l.events?.memberJoin ?? true);
+    setCheck('log-leave', l.events?.memberLeave ?? true);
+    setCheck('log-roles', l.events?.roleChanges ?? false);
+    setCheck('log-voice', l.events?.voiceActivity ?? false);
+    setCheck('log-bans', l.events?.bans ?? true);
+    setCheck('log-channels', l.events?.channelChanges ?? false);
+  } catch { /* silent */ }
+}
+
+async function saveLoggingConfig() {
+  try {
+    await api('POST', '/config', {
+      logging: {
+        channel: document.getElementById('log-channel')?.value?.trim() || '',
+        modChannel: document.getElementById('log-modchannel')?.value?.trim() || '',
+        events: {
+          messageDelete: getCheck('log-msgdelete'),
+          messageEdit: getCheck('log-msgedit'),
+          memberJoin: getCheck('log-join'),
+          memberLeave: getCheck('log-leave'),
+          roleChanges: getCheck('log-roles'),
+          voiceActivity: getCheck('log-voice'),
+          bans: getCheck('log-bans'),
+          channelChanges: getCheck('log-channels'),
+        }
+      }
+    });
+    toast('Logging settings saved!');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+/* ─── Presence ─────────────────────────────── */
+async function savePresence() {
+  try {
+    const status = document.getElementById('p-status')?.value || 'online';
+    const atype = parseInt(document.getElementById('p-atype')?.value || '3');
+    const aname = document.getElementById('p-aname')?.value || '';
+    await api('POST', '/config', { presence: { status, activities: aname ? [{ type: atype, name: aname }] : [] } });
+    toast('Presence saved!');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+/* ─── Colors ─────────────────────────────── */
+const colorFields = [
+  { key: 'primary', label: 'Primary', default: '#336699' },
+  { key: 'success', label: 'Success', default: '#57F287' },
+  { key: 'error', label: 'Error', default: '#ED4245' },
+  { key: 'warning', label: 'Warning', default: '#FEE75C' },
+  { key: 'info', label: 'Info', default: '#3498DB' },
+  { key: 'economy', label: 'Economy', default: '#F1C40F' },
+  { key: 'moderation', label: 'Moderation', default: '#9B59B6' },
+  { key: 'birthday', label: 'Birthday', default: '#E91E63' },
+];
+
+function buildColorGrid() {
+  const grid = document.getElementById('color-grid');
+  if (!grid) return;
+  grid.innerHTML = colorFields.map(({ key, label, default: def }) => `
+    <div class="color-field">
+      <label>${label}</label>
+      <div class="color-preview-row">
+        <input type="color" id="cc-${key}" value="${def}" oninput="syncColorText('${key}')">
+        <input type="text" id="ct-${key}" value="${def}" maxlength="7" oninput="syncColorPicker('${key}')">
+      </div>
+    </div>
+  `).join('');
+}
+
+function syncColorText(key) {
+  const picker = document.getElementById('cc-' + key);
+  const text = document.getElementById('ct-' + key);
+  if (picker && text) text.value = picker.value;
+}
+
+function syncColorPicker(key) {
+  const text = document.getElementById('ct-' + key);
+  const picker = document.getElementById('cc-' + key);
+  if (text && picker && /^#[0-9a-fA-F]{6}$/.test(text.value)) picker.value = text.value;
+}
+
+async function saveColors() {
+  try {
+    const colors = {};
+    colorFields.forEach(({ key }) => { const t = document.getElementById('ct-' + key); if (t?.value) colors[key] = t.value; });
+    const footer = document.getElementById('c-footer')?.value;
+    await api('POST', '/config', { embeds: { colors, ...(footer ? { footer: { text: footer } } : {}) } });
+    toast('Colors saved!');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+/* ─── Economy ─────────────────────────────── */
+async function saveEconomy() {
+  try {
+    await api('POST', '/config', {
+      economy: {
+        currency: { name: document.getElementById('e-name')?.value, namePlural: document.getElementById('e-plural')?.value, symbol: document.getElementById('e-symbol')?.value },
+        starting: parseInt(document.getElementById('e-start')?.value || '0'),
+        rewards: {
+          daily: { min: parseInt(document.getElementById('e-daily')?.value || '100') },
+          work: { min: parseInt(document.getElementById('e-wmin')?.value || '10'), max: parseInt(document.getElementById('e-wmax')?.value || '100') },
+          beg: { min: parseInt(document.getElementById('e-bmin')?.value || '5'), max: parseInt(document.getElementById('e-bmax')?.value || '50') }
+        },
+        rob: { successRate: parseFloat(document.getElementById('e-rob')?.value || '0.4') }
+      }
+    });
+    toast('Economy settings saved!');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+/* ─── Welcome ─────────────────────────────── */
+async function saveWelcome() {
+  try {
+    await api('POST', '/config', { welcome: { message: document.getElementById('w-welcome')?.value, goodbyeMessage: document.getElementById('w-goodbye')?.value } });
+    toast('Welcome messages saved!');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+/* ─── Misc ─────────────────────────────── */
+async function saveMisc() {
+  try {
+    await api('POST', '/config', { prefix: document.getElementById('m-prefix')?.value, cooldown: parseInt(document.getElementById('m-cooldown')?.value || '3') });
+    toast('Settings saved!');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+/* ─── Commands ─────────────────────────────── */
+async function loadCommands() {
+  try {
+    const cmds = await api('GET', '/commands');
+    const list = document.getElementById('cmd-list');
+    if (!list) return;
+    if (!cmds.length) {
+      list.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px 0">No custom commands yet. Use the builder above to create one.</div>';
+      return;
+    }
+    list.innerHTML = cmds.map(c => `
+      <div class="cmd-item" onclick="editCommand(${JSON.stringify(c).replace(/"/g, '&quot;')})">
+        <div class="cmd-name">!${c.name}</div>
+        <div class="cmd-preview">${c.useEmbed ? (c.embedDescription || c.embedTitle || 'Embed') : (c.response || '')}</div>
+        <div class="cmd-actions">
+          ${c.useEmbed ? '<span class="badge badge-embed">Embed</span>' : ''}
+          ${c.ownerOnly ? '<span class="badge badge-owner">Owner</span>' : '<span class="badge badge-public">Public</span>'}
+          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deleteCommand('${c.name}')">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+          </button>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) { toast('Failed to load commands: ' + e.message, 'error'); }
+}
+
+function editCommand(cmd) {
+  setVal('b-name', cmd.name); setVal('b-type', cmd.useEmbed ? 'embed' : 'text');
+  setVal('b-response', cmd.response || ''); setVal('b-etitle', cmd.embedTitle || '');
+  setVal('b-ecolor', cmd.embedColor || '#5865F2'); setVal('b-edesc', cmd.embedDescription || '');
+  setVal('b-efooter', cmd.embedFooter || '');
+  const ownerCb = document.getElementById('b-owner');
+  if (ownerCb) ownerCb.checked = !!cmd.ownerOnly;
+  toggleEmbedFields(); updatePreview(); window.scrollTo(0, 0);
+}
+
+async function saveCommand() {
+  try {
+    const name = document.getElementById('b-name')?.value?.trim();
+    const type = document.getElementById('b-type')?.value;
+    const useEmbed = type === 'embed';
+    if (!name) return toast('Command name is required', 'error');
+    const body = { name, useEmbed, ownerOnly: document.getElementById('b-owner')?.checked || false };
+    if (useEmbed) {
+      body.embedTitle = document.getElementById('b-etitle')?.value || '';
+      body.embedColor = document.getElementById('b-ecolor')?.value || '#5865F2';
+      body.embedDescription = document.getElementById('b-edesc')?.value || '';
+      body.embedFooter = document.getElementById('b-efooter')?.value || '';
+      body.response = '';
+    } else { body.response = document.getElementById('b-response')?.value || ''; }
+    await api('POST', '/commands', body);
+    toast(`Command !${name} saved!`); loadCommands(); clearBuilder();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteCommand(name) {
+  if (!confirm(`Delete command !${name}? This cannot be undone.`)) return;
+  try { await api('DELETE', `/commands/${name}`); toast(`Deleted !${name}`); loadCommands(); }
+  catch (e) { toast(e.message, 'error'); }
+}
+
+function clearBuilder() {
+  ['b-name', 'b-response', 'b-etitle', 'b-edesc', 'b-efooter'].forEach(id => setVal(id, ''));
+  setVal('b-type', 'text'); setVal('b-ecolor', '#5865F2');
+  const cb = document.getElementById('b-owner'); if (cb) cb.checked = false;
+  toggleEmbedFields(); updatePreview();
+}
+
+function toggleEmbedFields() {
+  const isEmbed = document.getElementById('b-type')?.value === 'embed';
+  const tf = document.getElementById('text-fields'); const ef = document.getElementById('embed-fields');
+  if (tf) tf.style.display = isEmbed ? 'none' : 'block';
+  if (ef) ef.style.display = isEmbed ? 'block' : 'none';
+}
+
+function updatePreview() {
+  const box = document.getElementById('preview-box');
+  if (!box) return;
+  const isEmbed = document.getElementById('b-type')?.value === 'embed';
+  const name = document.getElementById('b-name')?.value;
+  if (!name) { box.innerHTML = '<span style="color:var(--muted);font-size:13px">Fill in the form above to see a preview...</span>'; return; }
+  if (isEmbed) {
+    const title = document.getElementById('b-etitle')?.value || '';
+    const color = document.getElementById('b-ecolor')?.value || '#5865F2';
+    const desc = document.getElementById('b-edesc')?.value || '';
+    const footer = document.getElementById('b-efooter')?.value || '';
+    box.innerHTML = `<div class="preview-embed" style="border-left-color:${color}">${title ? `<div class="pe-title">${esc(title)}</div>` : ''}${desc ? `<div class="pe-desc">${esc(desc).replace(/\n/g, '<br>')}</div>` : ''}${footer ? `<div class="pe-footer">${esc(footer)}</div>` : ''}</div>`;
+  } else {
+    const resp = document.getElementById('b-response')?.value || '';
+    box.innerHTML = `<div class="preview-text">${esc(resp).replace(/\n/g, '<br>') || '<span style="color:#72767d">Response will appear here...</span>'}</div>`;
+  }
+}
+
+function esc(str) { return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+/* ─── Whitelist ─────────────────────────────── */
+async function loadWhitelist() {
+  try {
+    const d = await api('GET', '/whitelist');
+    renderIdList('wl-list', d.whitelist || [], true);
+    renderIdList('wl-owners', d.owners || [], false, true);
+  } catch {
+    const e = document.getElementById('wl-list');
+    if (e) e.innerHTML = '<span style="color:var(--red);font-size:12px">Forbidden — requires Unlimited mode</span>';
+  }
+}
+
+function renderIdList(elId, ids, removable = false, owner = false) {
+  const container = document.getElementById(elId);
+  if (!container) return;
+  if (!ids.length) { container.innerHTML = '<span style="color:var(--muted);font-size:12px">None</span>'; return; }
+  container.innerHTML = ids.map(id => `
+    <div class="id-chip${owner ? ' owner' : ''}">
+      <code>${id}</code>
+      ${removable ? `<button class="remove" onclick="wlAction('remove','${id}')" title="Remove">×</button>` : ''}
+    </div>
+  `).join('');
+}
+
+async function wlAction(action, prefilledId) {
+  const id = prefilledId || document.getElementById('wl-id')?.value?.trim();
+  if (!id) return toast('Enter a Discord User ID', 'error');
+  try {
+    await api('POST', '/whitelist', { action, discordId: id });
+    toast(action === 'add' ? 'User added to whitelist' : 'User removed from whitelist');
+    loadWhitelist(); if (!prefilledId) setVal('wl-id', '');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+/* ─── Set Balance ─────────────────────────────── */
+async function setBalance() {
+  try {
+    const userId = document.getElementById('sm-id')?.value?.trim();
+    const amount = parseInt(document.getElementById('sm-amt')?.value || '0');
+    const type = document.getElementById('sm-type')?.value || 'wallet';
+    if (!userId) return toast('Enter a Discord User ID', 'error');
+    await api('POST', '/setmoney', { userId, amount, type });
+    toast(`Balance set: ${userId} ${type} → ${amount}`);
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+/* ─── Raw Config ─────────────────────────────── */
+async function loadRC() {
+  try {
+    const d = await api('GET', '/raw-config');
+    setVal('rc-overrides', JSON.stringify(d.fileOverrides || {}, null, 2));
+    setVal('rc-cmds', JSON.stringify(d.customCommands || [], null, 2));
+    setVal('rc-gcfg', JSON.stringify(d.globalGuildConfig || {}, null, 2));
+  } catch (e) { toast('Forbidden — requires Unlimited mode', 'error'); }
+}
+
+async function saveRC(field, elId) {
+  let parsed;
+  try { parsed = JSON.parse(document.getElementById(elId)?.value || '{}'); }
+  catch (e) { toast('Invalid JSON: ' + e.message, 'error'); return; }
+  try { await api('POST', '/raw-config', { [field]: parsed }); toast('Saved!'); }
+  catch (e) { toast(e.message, 'error'); }
+}
+
+/* ─── Logout ─────────────────────────────── */
+async function doLogout() {
+  try { await api('POST', '/logout'); } catch { /* ignore */ }
+  window.location.href = '/admin/login';
+}
+
+/* ─── Download dashboard ─────────────────────────────── */
+function downloadDashboard() {
+  window.location.href = _BASE + '/download';
+}
+
+/* ─── Guild selector helper ─────────────────────────────── */
+let _guildsCache = null;
+async function loadGuildSelector(selectId, onSelect) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Loading servers…</option>';
+  try {
+    const d = await api('GET', '/discord/guilds');
+    _guildsCache = d.guilds || [];
+    sel.innerHTML = '<option value="">— Select a server —</option>' +
+      _guildsCache.map(g => `<option value="${g.id}">${esc(g.name)}</option>`).join('');
+    sel.onchange = () => { if (sel.value && onSelect) onSelect(sel.value, sel.options[sel.selectedIndex].text); };
+  } catch (e) {
+    sel.innerHTML = `<option value="">Error: ${esc(e.message)}</option>`;
+  }
+}
+
+async function loadChannelSelector(guildId, selectId, filterType) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Loading…</option>';
+  try {
+    const d = await api('GET', `/discord/guild/${guildId}/channels`);
+    const TYPES = { text: [0, 5], voice: [2], category: [4], forum: [15], all: null };
+    const allowed = TYPES[filterType] || null;
+    const ch = (d.channels || [])
+      .filter(c => !allowed || allowed.includes(c.type))
+      .sort((a, b) => a.position - b.position);
+    sel.innerHTML = '<option value="">— Select a channel —</option>' +
+      ch.map(c => `<option value="${c.id}">#${esc(c.name)}</option>`).join('');
+  } catch (e) { sel.innerHTML = `<option value="">Error: ${esc(e.message)}</option>`; }
+}
+
+async function loadRoleSelector(guildId, selectId) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Loading…</option>';
+  try {
+    const d = await api('GET', `/discord/guild/${guildId}/roles`);
+    const roles = (d.roles || []).filter(r => r.name !== '@everyone').sort((a, b) => b.position - a.position);
+    sel.innerHTML = '<option value="">— Select a role —</option>' +
+      roles.map(r => `<option value="${r.id}" style="color:#${r.color ? r.color.toString(16).padStart(6,'0') : 'aaa'}">@${esc(r.name)}</option>`).join('');
+  } catch (e) { sel.innerHTML = `<option value="">Error: ${esc(e.message)}</option>`; }
+}
+
+/* ─── Discord Browser ─────────────────────────────── */
+let _browserGuildId = null;
+async function initDiscordBrowser() {
+  await loadGuildSelector('db-guild-sel', async (guildId, name) => {
+    _browserGuildId = guildId;
+    document.getElementById('db-guild-name').textContent = name;
+    document.getElementById('db-guild-detail').style.display = 'block';
+    await Promise.all([loadBrowserChannels(guildId), loadBrowserRoles(guildId)]);
+  });
+}
+
+async function loadBrowserChannels(guildId) {
+  const el = document.getElementById('db-channels');
+  el.innerHTML = '<div style="color:var(--muted)">Loading…</div>';
+  try {
+    const d = await api('GET', `/discord/guild/${guildId}/channels`);
+    const typeNames = { 0:'# Text',2:'🔊 Voice',4:'📂 Category',5:'📢 Announce',13:'🎙️ Stage',15:'💬 Forum' };
+    const sorted = (d.channels||[]).sort((a,b)=>a.position-b.position);
+    el.innerHTML = sorted.map(c => `
+      <div class="browser-row">
+        <span class="browser-type">${typeNames[c.type]||'?'}</span>
+        <span class="browser-name">${esc(c.name)}</span>
+        <code class="browser-id" onclick="copyId('${c.id}')" title="Click to copy">${c.id}</code>
+      </div>`).join('') || '<div style="color:var(--muted)">No channels</div>';
+  } catch (e) { el.innerHTML = `<div style="color:var(--red)">${esc(e.message)}</div>`; }
+}
+
+async function loadBrowserRoles(guildId) {
+  const el = document.getElementById('db-roles');
+  el.innerHTML = '<div style="color:var(--muted)">Loading…</div>';
+  try {
+    const d = await api('GET', `/discord/guild/${guildId}/roles`);
+    const roles = (d.roles||[]).filter(r=>r.name!=='@everyone').sort((a,b)=>b.position-a.position);
+    el.innerHTML = roles.map(r => {
+      const hex = r.color ? '#'+r.color.toString(16).padStart(6,'0') : '#99aab5';
+      return `<div class="browser-row">
+        <span class="role-dot" style="background:${hex}"></span>
+        <span class="browser-name">@${esc(r.name)}</span>
+        <code class="browser-id" onclick="copyId('${r.id}')" title="Click to copy">${r.id}</code>
+      </div>`;
+    }).join('') || '<div style="color:var(--muted)">No roles</div>';
+  } catch (e) { el.innerHTML = `<div style="color:var(--red)">${esc(e.message)}</div>`; }
+}
+
+function copyId(id) {
+  navigator.clipboard.writeText(id).then(() => toast('ID copied: ' + id));
+}
+
+/* ─── Ticket Systems ─────────────────────────────── */
+let _tpGuildId = null;
+let _tpGuildChannels = [];
+let _tpGuildRoles = [];
+let _tpEditId = null;
+
+async function initTicketSystems() {
+  await loadGuildSelector('tp-guild-sel', async (guildId) => {
+    _tpGuildId = guildId;
+    document.getElementById('tp-main').style.display = 'block';
+    await Promise.all([
+      loadTicketPanelList(),
+      api('GET', `/discord/guild/${guildId}/channels`).then(d => { _tpGuildChannels = d.channels || []; }).catch(()=>{}),
+      api('GET', `/discord/guild/${guildId}/roles`).then(d => { _tpGuildRoles = d.roles || []; }).catch(()=>{}),
+    ]);
+    populateTicketSelectors();
+  });
+}
+
+function populateTicketSelectors() {
+  const textCh = _tpGuildChannels.filter(c=>[0,5].includes(c.type)).sort((a,b)=>a.position-b.position);
+  const cats   = _tpGuildChannels.filter(c=>c.type===4).sort((a,b)=>a.position-b.position);
+  const roles  = _tpGuildRoles.filter(r=>r.name!=='@everyone').sort((a,b)=>b.position-a.position);
+
+  const chOpts = '<option value="">— None —</option>' + textCh.map(c=>`<option value="${c.id}">#${esc(c.name)}</option>`).join('');
+  const catOpts = '<option value="">— None —</option>' + cats.map(c=>`<option value="${c.id}">📂 ${esc(c.name)}</option>`).join('');
+  const roleOpts = '<option value="">— None —</option>' + roles.map(r=>`<option value="${r.id}">@${esc(r.name)}</option>`).join('');
+
+  setInner('tp-f-channel', chOpts);
+  setInner('tp-f-category', catOpts);
+  setInner('tp-f-staffrole', roleOpts);
+}
+
+function setInner(id, html) { const e = document.getElementById(id); if (e) e.innerHTML = html; }
+
+async function loadTicketPanelList() {
+  if (!_tpGuildId) return;
+  const el = document.getElementById('tp-panel-list');
+  el.innerHTML = '<div style="color:var(--muted)">Loading…</div>';
+  try {
+    const d = await api('GET', `/ticket-panels/${_tpGuildId}`);
+    const panels = d.panels || [];
+    if (!panels.length) { el.innerHTML = '<div style="color:var(--muted);padding:8px 0">No ticket panels yet. Create one above.</div>'; return; }
+    el.innerHTML = panels.map(p => `
+      <div class="cmd-item">
+        <div class="cmd-name">🎫 ${esc(p.name)}</div>
+        <div class="cmd-preview">${esc(p.panelMessage||'').slice(0,80)} · Button: <strong>${esc(p.buttonLabel||'Create Ticket')}</strong></div>
+        <div class="cmd-actions">
+          ${p.categoryId ? `<span class="badge badge-embed">Cat set</span>` : ''}
+          ${p.staffRoleId ? `<span class="badge badge-owner">Role set</span>` : ''}
+          <button class="btn btn-primary btn-sm" onclick="editTicketPanel(${JSON.stringify(p).replace(/"/g,'&quot;')})">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteTicketPanel('${p.panelId}')">Delete</button>
+        </div>
+      </div>`).join('');
+  } catch (e) { el.innerHTML = `<div style="color:var(--red)">${esc(e.message)}</div>`; }
+}
+
+function editTicketPanel(p) {
+  _tpEditId = p.panelId;
+  setVal('tp-f-name', p.name || '');
+  setVal('tp-f-msg', p.panelMessage || '');
+  setVal('tp-f-btn', p.buttonLabel || 'Create Ticket');
+  setVal('tp-f-max', p.maxTicketsPerUser || 3);
+  setCheck('tp-f-dm', p.dmOnClose !== false);
+  // Set selects after a tick (DOM may not have values yet)
+  setTimeout(() => {
+    setVal('tp-f-channel', p.channelId || '');
+    setVal('tp-f-category', p.categoryId || '');
+    setVal('tp-f-staffrole', p.staffRoleId || '');
+  }, 50);
+  document.getElementById('tp-form-title').textContent = `✏️ Edit Panel: ${p.name}`;
+  document.getElementById('tp-cancel-btn').style.display = 'inline-flex';
+  document.getElementById('tp-form-card').scrollIntoView({ behavior: 'smooth' });
+}
+
+function clearTicketForm() {
+  _tpEditId = null;
+  ['tp-f-name','tp-f-msg','tp-f-btn'].forEach(id => setVal(id, ''));
+  setVal('tp-f-max', 3);
+  setCheck('tp-f-dm', true);
+  ['tp-f-channel','tp-f-category','tp-f-staffrole'].forEach(id => setVal(id, ''));
+  document.getElementById('tp-form-title').textContent = '➕ Create Ticket Panel';
+  document.getElementById('tp-cancel-btn').style.display = 'none';
+}
+
+async function saveTicketPanel() {
+  if (!_tpGuildId) return toast('Select a server first', 'error');
+  const name = document.getElementById('tp-f-name')?.value?.trim();
+  if (!name) return toast('Panel name is required', 'error');
+  const panel = {
+    panelId: _tpEditId || undefined,
+    name,
+    panelMessage: document.getElementById('tp-f-msg')?.value?.trim() || 'Click below to open a support ticket.',
+    buttonLabel: document.getElementById('tp-f-btn')?.value?.trim() || 'Create Ticket',
+    channelId: document.getElementById('tp-f-channel')?.value || null,
+    categoryId: document.getElementById('tp-f-category')?.value || null,
+    staffRoleId: document.getElementById('tp-f-staffrole')?.value || null,
+    maxTicketsPerUser: parseInt(document.getElementById('tp-f-max')?.value || '3'),
+    dmOnClose: getCheck('tp-f-dm'),
+  };
+  try {
+    await api('POST', `/ticket-panels/${_tpGuildId}`, panel);
+    toast(`Panel "${name}" saved!`);
+    clearTicketForm();
+    loadTicketPanelList();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteTicketPanel(panelId) {
+  if (!confirm('Delete this ticket panel?')) return;
+  try {
+    await api('DELETE', `/ticket-panels/${_tpGuildId}/${panelId}`);
+    toast('Panel deleted');
+    loadTicketPanelList();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+/* ─── Per-Guild Config (Welcome/Logging/Roles) ─────────────────────────────── */
+let _gcGuildId = null;
+
+async function initGuildConfig() {
+  await loadGuildSelector('gc-guild-sel', async (guildId) => {
+    _gcGuildId = guildId;
+    document.getElementById('gc-main').style.display = 'block';
+    await loadGuildConfigData();
+    await Promise.all([
+      loadChannelSelector(guildId, 'gc-welcome-ch', 'text'),
+      loadChannelSelector(guildId, 'gc-goodbye-ch', 'text'),
+      loadChannelSelector(guildId, 'gc-log-ch', 'text'),
+      loadChannelSelector(guildId, 'gc-modlog-ch', 'text'),
+      loadRoleSelector(guildId, 'gc-mod-role'),
+      loadRoleSelector(guildId, 'gc-admin-role'),
+      loadRoleSelector(guildId, 'gc-autorole'),
+    ]);
+  });
+}
+
+async function loadGuildConfigData() {
+  if (!_gcGuildId) return;
+  try {
+    const d = await api('GET', `/guild-config/${_gcGuildId}`);
+    const c = d.config || {};
+    setVal('gc-welcome-msg', c.welcomeMessage || '');
+    setVal('gc-goodbye-msg', c.goodbyeMessage || '');
+    setCheck('gc-dm-close', c.dmOnClose !== false);
+    setTimeout(() => {
+      setVal('gc-welcome-ch', c.welcomeChannelId || c.welcomeChannel || '');
+      setVal('gc-goodbye-ch', c.goodbyeChannelId || '');
+      setVal('gc-log-ch', c.logChannelId || '');
+      setVal('gc-modlog-ch', c.modLogChannelId || '');
+      setVal('gc-mod-role', c.modRole || '');
+      setVal('gc-admin-role', c.adminRole || '');
+      setVal('gc-autorole', c.autoRole || '');
+    }, 100);
+  } catch (e) { toast('Failed to load config: ' + e.message, 'error'); }
+}
+
+async function saveGuildConfig() {
+  if (!_gcGuildId) return toast('Select a server first', 'error');
+  try {
+    await api('POST', `/guild-config/${_gcGuildId}`, {
+      welcomeChannelId: document.getElementById('gc-welcome-ch')?.value || null,
+      welcomeMessage: document.getElementById('gc-welcome-msg')?.value || '',
+      goodbyeChannelId: document.getElementById('gc-goodbye-ch')?.value || null,
+      goodbyeMessage: document.getElementById('gc-goodbye-msg')?.value || '',
+      logChannelId: document.getElementById('gc-log-ch')?.value || null,
+      modLogChannelId: document.getElementById('gc-modlog-ch')?.value || null,
+      modRole: document.getElementById('gc-mod-role')?.value || null,
+      adminRole: document.getElementById('gc-admin-role')?.value || null,
+      autoRole: document.getElementById('gc-autorole')?.value || null,
+      dmOnClose: getCheck('gc-dm-close'),
+    });
+    toast('Server config saved!');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+/* ─── Leveling ─────────────────────────────── */
+let _lvGuildId = null;
+
+async function initLeveling() {
+  await loadGuildSelector('lv-guild-sel', async (guildId) => {
+    _lvGuildId = guildId;
+    document.getElementById('lv-main').style.display = 'block';
+    await loadLevelingData();
+    loadChannelSelector(guildId, 'lv-levelup-ch', 'text');
+  });
+}
+
+async function loadLevelingData() {
+  if (!_lvGuildId) return;
+  try {
+    const d = await api('GET', `/leveling-config/${_lvGuildId}`);
+    const c = d.config || {};
+    setVal('lv-xp-min', c.xpMin ?? 10);
+    setVal('lv-xp-max', c.xpMax ?? 25);
+    setVal('lv-cooldown', c.cooldown ?? 60);
+    setCheck('lv-enabled', c.enabled !== false);
+    setCheck('lv-announce', c.announceOnLevelUp !== false);
+    setTimeout(() => setVal('lv-levelup-ch', c.levelUpChannelId || ''), 100);
+  } catch (e) { toast('Failed to load leveling config: ' + e.message, 'error'); }
+}
+
+async function saveLeveling() {
+  if (!_lvGuildId) return toast('Select a server first', 'error');
+  try {
+    await api('POST', `/leveling-config/${_lvGuildId}`, {
+      enabled: getCheck('lv-enabled'),
+      xpMin: parseInt(document.getElementById('lv-xp-min')?.value || '10'),
+      xpMax: parseInt(document.getElementById('lv-xp-max')?.value || '25'),
+      cooldown: parseInt(document.getElementById('lv-cooldown')?.value || '60'),
+      announceOnLevelUp: getCheck('lv-announce'),
+      levelUpChannelId: document.getElementById('lv-levelup-ch')?.value || null,
+    });
+    toast('Leveling settings saved!');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+/* ─── Birthday ─────────────────────────────── */
+let _bdGuildId = null;
+
+async function initBirthday() {
+  await loadGuildSelector('bd-guild-sel', async (guildId) => {
+    _bdGuildId = guildId;
+    document.getElementById('bd-main').style.display = 'block';
+    await loadBirthdayData();
+    await Promise.all([
+      loadChannelSelector(guildId, 'bd-channel', 'text'),
+      loadRoleSelector(guildId, 'bd-role'),
+    ]);
+  });
+}
+
+async function loadBirthdayData() {
+  if (!_bdGuildId) return;
+  try {
+    const d = await api('GET', `/birthday-config/${_bdGuildId}`);
+    setVal('bd-message', d.birthdayMessage || '🎂 Happy Birthday {user}! 🎉');
+    setTimeout(() => {
+      setVal('bd-channel', d.birthdayChannelId || '');
+      setVal('bd-role', d.birthdayRole || '');
+    }, 100);
+  } catch (e) { toast('Failed to load birthday config: ' + e.message, 'error'); }
+}
+
+async function saveBirthday() {
+  if (!_bdGuildId) return toast('Select a server first', 'error');
+  try {
+    await api('POST', `/birthday-config/${_bdGuildId}`, {
+      birthdayChannelId: document.getElementById('bd-channel')?.value || null,
+      birthdayRole: document.getElementById('bd-role')?.value || null,
+      birthdayMessage: document.getElementById('bd-message')?.value || '🎂 Happy Birthday {user}! 🎉',
+    });
+    toast('Birthday settings saved!');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+/* ─── Server Backup ─────────────────────────────── */
+let _sbGuildId = null;
+
+async function initServerBackup() {
+  await loadGuildSelector('sb-guild-sel', async (guildId) => {
+    _sbGuildId = guildId;
+    document.getElementById('sb-main').style.display = 'block';
+    loadSnapshotInfo();
+  });
+}
+
+async function loadSnapshotInfo() {
+  if (!_sbGuildId) return;
+  const el = document.getElementById('sb-info');
+  el.innerHTML = '<div style="color:var(--muted)">Loading…</div>';
+  try {
+    const d = await api('GET', `/server-snapshot/${_sbGuildId}`);
+    if (!d.snapshot) {
+      el.innerHTML = '<div style="color:var(--muted)">No backup found for this server.</div>';
+    } else {
+      const date = new Date(d.snapshot.savedAt).toLocaleString();
+      el.innerHTML = `
+        <div class="snapshot-stat"><strong>Last saved:</strong> ${date}</div>
+        <div class="snapshot-stat"><strong>Roles:</strong> ${d.snapshot.roleCount}</div>
+        <div class="snapshot-stat"><strong>Channels:</strong> ${d.snapshot.channelCount}</div>`;
+    }
+  } catch (e) { el.innerHTML = `<div style="color:var(--red)">${esc(e.message)}</div>`; }
+}
+
+function sbInstruction(action) {
+  if (!_sbGuildId) return toast('Select a server first', 'error');
+  const cmd = action === 'save' ? '!saveserver' : '!loadserver';
+  toast(`Run "${cmd}" in your Discord server to ${action === 'save' ? 'save a snapshot' : 'restore from snapshot'}`);
+  document.getElementById('sb-cmd-hint').textContent = `→ Type "${cmd}" in your Discord server`;
+  document.getElementById('sb-cmd-hint').style.display = 'block';
+}
+
+</script>
+</body>
+</html>
