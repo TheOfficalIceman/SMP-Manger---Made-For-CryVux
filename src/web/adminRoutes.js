@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createReadStream, readFileSync, writeFileSync, existsSync, statSync } from 'fs';
+import { createReadStream, readFileSync, writeFileSync, existsSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { randomBytes } from 'crypto';
@@ -10,6 +10,8 @@ const DATA_DIR = path.join(__dirname, '../../data');
 const PUBLIC_DIR = path.join(__dirname, '../../public/admin');
 const COMMANDS_FILE = path.join(DATA_DIR, 'custom-commands.json');
 const CONFIG_FILE = path.join(DATA_DIR, 'bot-config-overrides.json');
+const MODULES_FILE = path.join(DATA_DIR, 'modules-state.json');
+const MUSIC_CONFIG_FILE = path.join(DATA_DIR, 'music-config.json');
 
 const SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || randomBytes(32).toString('hex');
 const sessions = new Map();
@@ -29,21 +31,14 @@ const MIME = {
 
 /* ─── File helpers ─────────────────────── */
 function readJSON(file, fallback) {
-  try {
-    if (!existsSync(file)) return fallback;
-    return JSON.parse(readFileSync(file, 'utf8'));
-  } catch { return fallback; }
+  try { if (!existsSync(file)) return fallback; return JSON.parse(readFileSync(file, 'utf8')); }
+  catch { return fallback; }
 }
 
-function writeJSON(file, data) {
-  writeFileSync(file, JSON.stringify(data, null, 2), 'utf8');
-}
+function writeJSON(file, data) { writeFileSync(file, JSON.stringify(data, null, 2), 'utf8'); }
 
 function serveFile(res, filePath) {
-  if (!existsSync(filePath)) {
-    res.status(404).send('Not found');
-    return;
-  }
+  if (!existsSync(filePath)) { res.status(404).send('Not found'); return; }
   const ext = path.extname(filePath);
   const mime = MIME[ext] || 'application/octet-stream';
   res.setHeader('Content-Type', mime);
@@ -52,9 +47,7 @@ function serveFile(res, filePath) {
 }
 
 /* ─── Session helpers ─────────────────────── */
-function makeToken() {
-  return randomBytes(32).toString('hex');
-}
+function makeToken() { return randomBytes(32).toString('hex'); }
 
 function parseToken(req) {
   const cookie = req.headers.cookie || '';
@@ -72,7 +65,7 @@ function requireAuth(req, res, next) {
 function requireUnlimited(req, res, next) {
   const token = parseToken(req);
   const sess = token && sessions.get(token);
-  if (!sess?.unlimited) return res.status(403).json({ error: 'Unlimited mode required — log in with a whitelisted Discord ID.' });
+  if (!sess?.unlimited) return res.status(403).json({ error: 'Unlimited mode required.' });
   next();
 }
 
@@ -94,9 +87,7 @@ function deepMerge(target, source) {
   for (const k of Object.keys(source)) {
     if (source[k] && typeof source[k] === 'object' && !Array.isArray(source[k])) {
       out[k] = deepMerge(target[k] || {}, source[k]);
-    } else {
-      out[k] = source[k];
-    }
+    } else { out[k] = source[k]; }
   }
   return out;
 }
@@ -105,21 +96,21 @@ function deepMerge(target, source) {
 export function setupAdminRoutes(app, client) {
   const router = Router();
 
-  /* ── Static files (CSS, JS, assets) ── */
-  router.get('/css/:file', (req, res) => {
-    const safe = path.basename(req.params.file);
-    serveFile(res, path.join(PUBLIC_DIR, 'css', safe));
+  /* ── Discord Activity & CORS headers ── */
+  router.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('X-Frame-Options', 'ALLOWALL');
+    res.setHeader('Content-Security-Policy', "frame-ancestors 'self' https://discord.com https://*.discord.com https://discordapp.com");
+    if (req.method === 'OPTIONS') return res.status(204).end();
+    next();
   });
 
-  router.get('/js/:file', (req, res) => {
-    const safe = path.basename(req.params.file);
-    serveFile(res, path.join(PUBLIC_DIR, 'js', safe));
-  });
-
-  router.get('/assets/:file', (req, res) => {
-    const safe = path.basename(req.params.file);
-    serveFile(res, path.join(PUBLIC_DIR, 'assets', safe));
-  });
+  /* ── Static files ── */
+  router.get('/css/:file', (req, res) => serveFile(res, path.join(PUBLIC_DIR, 'css', path.basename(req.params.file))));
+  router.get('/js/:file', (req, res) => serveFile(res, path.join(PUBLIC_DIR, 'js', path.basename(req.params.file))));
+  router.get('/assets/:file', (req, res) => serveFile(res, path.join(PUBLIC_DIR, 'assets', path.basename(req.params.file))));
 
   /* ── Login page ── */
   router.get('/login', (req, res) => {
@@ -128,44 +119,26 @@ export function setupAdminRoutes(app, client) {
     serveFile(res, path.join(PUBLIC_DIR, 'login.html'));
   });
 
+  /* ── Discord Activity verification ── */
+  router.get('/.well-known/discord', (req, res) => {
+    res.json({ type: 1 });
+  });
+
   /* ── Login API ── */
   router.post('/api/login', parseBody(), async (req, res) => {
-    const { password, discordId } = req.body || {};
+    const { password } = req.body || {};
     const expected = process.env.ADMIN_PASSWORD;
     if (!expected) return res.status(500).json({ error: 'ADMIN_PASSWORD not set in environment' });
-    if (!password || password !== expected) {
-      return res.status(401).json({ error: 'Invalid password' });
-    }
-
-    const SUPER_ADMINS = (process.env.OWNER_IDS || process.env.OWNER_ID || '').split(/[,\s]+/).filter(Boolean);
-    const HARDCODED_SUPER = ['1184500199800963263'];
-    const owners = [...new Set([...HARDCODED_SUPER, ...SUPER_ADMINS])];
-
-    let list = [];
-    try { list = (await client.db?.get?.('fun:global:whitelist')) || []; } catch { list = []; }
-
-    const id = (discordId || '').trim();
-    let unlimited = false;
-
-    if (list.length === 0 && owners.length === 0) {
-      unlimited = true;
-    } else if (id && (owners.includes(id) || list.includes(id))) {
-      unlimited = true;
-    } else if (id) {
-      return res.status(403).json({ error: 'Discord ID not on whitelist' });
-    }
+    if (!password || password !== expected) return res.status(401).json({ error: 'Invalid password' });
 
     const token = makeToken();
-    sessions.set(token, { createdAt: Date.now(), unlimited, discordId: id });
+    sessions.set(token, { createdAt: Date.now(), unlimited: true });
 
-    // Clean old sessions (> 24h)
     const cutoff = Date.now() - 86400000;
-    for (const [t, s] of sessions) {
-      if (s.createdAt < cutoff) sessions.delete(t);
-    }
+    for (const [t, s] of sessions) { if (s.createdAt < cutoff) sessions.delete(t); }
 
     res.setHeader('Set-Cookie', `admin_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400`);
-    res.json({ ok: true, unlimited });
+    res.json({ ok: true, unlimited: true });
   });
 
   /* ── Logout API ── */
@@ -180,15 +153,13 @@ export function setupAdminRoutes(app, client) {
   router.use(requireAuth);
 
   /* ── Dashboard (root) ── */
-  router.get('/', (req, res) => {
-    serveFile(res, path.join(PUBLIC_DIR, 'index.html'));
-  });
+  router.get('/', (req, res) => serveFile(res, path.join(PUBLIC_DIR, 'index.html')));
 
   /* ── Session info ── */
   router.get('/api/session', (req, res) => {
     const token = parseToken(req);
     const sess = token && sessions.get(token);
-    res.json({ unlimited: !!sess?.unlimited, discordId: sess?.discordId || null });
+    res.json({ unlimited: !!sess?.unlimited });
   });
 
   /* ── Bot status ── */
@@ -208,9 +179,7 @@ export function setupAdminRoutes(app, client) {
   });
 
   /* ── Config ── */
-  router.get('/api/config', (req, res) => {
-    res.json(readJSON(CONFIG_FILE, {}));
-  });
+  router.get('/api/config', (req, res) => res.json(readJSON(CONFIG_FILE, {})));
 
   router.post('/api/config', parseBody(), (req, res) => {
     try {
@@ -219,15 +188,41 @@ export function setupAdminRoutes(app, client) {
       writeJSON(CONFIG_FILE, updated);
       logger.info('[Admin] Config overrides saved');
       res.json({ ok: true, config: updated });
-    } catch (e) {
-      res.status(500).json({ error: e.message });
-    }
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  /* ── Modules ── */
+  router.get('/api/modules', (req, res) => {
+    res.json({ modules: readJSON(MODULES_FILE, {}) });
+  });
+
+  router.post('/api/modules', parseBody(), (req, res) => {
+    try {
+      const current = readJSON(MODULES_FILE, {});
+      const updated = { ...current, ...(req.body?.modules || {}) };
+      writeJSON(MODULES_FILE, updated);
+      logger.info('[Admin] Modules state updated');
+      res.json({ ok: true, modules: updated });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  /* ── Music config ── */
+  router.get('/api/music-config', (req, res) => {
+    res.json({ music: readJSON(MUSIC_CONFIG_FILE, {}) });
+  });
+
+  router.post('/api/music-config', parseBody(), (req, res) => {
+    try {
+      const current = readJSON(MUSIC_CONFIG_FILE, {});
+      const updated = { ...current, ...(req.body?.music || {}) };
+      writeJSON(MUSIC_CONFIG_FILE, updated);
+      logger.info('[Admin] Music config saved');
+      res.json({ ok: true, music: updated });
+    } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
   /* ── Custom commands ── */
-  router.get('/api/commands', (req, res) => {
-    res.json(readJSON(COMMANDS_FILE, []));
-  });
+  router.get('/api/commands', (req, res) => res.json(readJSON(COMMANDS_FILE, [])));
 
   router.post('/api/commands', parseBody(), (req, res) => {
     try {
@@ -235,30 +230,20 @@ export function setupAdminRoutes(app, client) {
       const { name, response, embedTitle, embedColor, embedDescription, embedFooter, ownerOnly, useEmbed } = req.body || {};
       if (!name || !name.match(/^[a-z0-9_-]+$/i)) return res.status(400).json({ error: 'Invalid command name. Use letters, numbers, _ or -' });
       if (!response && !embedDescription) return res.status(400).json({ error: 'Response or embed description required' });
-
       const existing = cmds.findIndex(c => c.name.toLowerCase() === name.toLowerCase());
       const cmd = {
-        name: name.toLowerCase(),
-        response: response || '',
-        useEmbed: !!useEmbed,
-        embedTitle: embedTitle || '',
-        embedDescription: embedDescription || '',
-        embedColor: embedColor || '#5865F2',
-        embedFooter: embedFooter || '',
+        name: name.toLowerCase(), response: response || '', useEmbed: !!useEmbed,
+        embedTitle: embedTitle || '', embedDescription: embedDescription || '',
+        embedColor: embedColor || '#5865F2', embedFooter: embedFooter || '',
         ownerOnly: !!ownerOnly,
         createdAt: existing >= 0 ? cmds[existing].createdAt : new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-
-      if (existing >= 0) cmds[existing] = cmd;
-      else cmds.push(cmd);
-
+      if (existing >= 0) cmds[existing] = cmd; else cmds.push(cmd);
       writeJSON(COMMANDS_FILE, cmds);
       logger.info(`[Admin] Custom command !${name} saved`);
       res.json({ ok: true, command: cmd });
-    } catch (e) {
-      res.status(500).json({ error: e.message });
-    }
+    } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
   router.delete('/api/commands/:name', (req, res) => {
@@ -270,9 +255,7 @@ export function setupAdminRoutes(app, client) {
       writeJSON(COMMANDS_FILE, cmds);
       logger.info(`[Admin] Custom command !${req.params.name} deleted`);
       res.json({ ok: true });
-    } catch (e) {
-      res.status(500).json({ error: e.message });
-    }
+    } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
   /* ── Whitelist (unlimited only) ── */
@@ -291,14 +274,9 @@ export function setupAdminRoutes(app, client) {
       const { action, discordId } = req.body || {};
       if (!discordId || !/^\d{5,25}$/.test(String(discordId))) return res.status(400).json({ error: 'Invalid Discord ID' });
       const list = (await client.db?.get?.('fun:global:whitelist')) || [];
-      if (action === 'add') {
-        if (!list.includes(discordId)) list.push(discordId);
-      } else if (action === 'remove') {
-        const i = list.indexOf(discordId);
-        if (i >= 0) list.splice(i, 1);
-      } else {
-        return res.status(400).json({ error: 'action must be add or remove' });
-      }
+      if (action === 'add') { if (!list.includes(discordId)) list.push(discordId); }
+      else if (action === 'remove') { const i = list.indexOf(discordId); if (i >= 0) list.splice(i, 1); }
+      else return res.status(400).json({ error: 'action must be add or remove' });
       await client.db?.set?.('fun:global:whitelist', list);
       logger.warn(`[Admin] Whitelist ${action}: ${discordId}`);
       res.json({ ok: true, whitelist: list });
