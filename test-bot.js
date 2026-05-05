@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, EmbedBuilder } from 'discord.js';
+import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, EmbedBuilder, ActivityType } from 'discord.js';
 
 const TOKEN = process.env.DISCORD_TOKEN_TEST;
 const CLIENT_ID = process.env.CLIENT_ID_TEST;
@@ -40,6 +40,10 @@ const commands = [
   new SlashCommandBuilder()
     .setName('coinflip')
     .setDescription('Flip a coin'),
+
+  new SlashCommandBuilder()
+    .setName('ownerid')
+    .setDescription('Get your Discord User ID to use as the bot owner'),
 ].map(c => c.toJSON());
 
 async function registerCommands() {
@@ -73,7 +77,7 @@ client.once('ready', async () => {
   await registerCommands();
   client.user.setPresence({
     status: 'online',
-    activities: [{ type: 3, name: 'the dashboard — /info' }],
+    activities: [{ type: ActivityType.Watching, name: 'TitanBot | /ownerid' }],
   });
 });
 
@@ -158,6 +162,22 @@ client.on('interactionCreate', async interaction => {
           .setColor(result === 'Heads' ? 0xf5c542 : 0x9397ab)
           .setTitle('🪙 Coin Flip')
           .setDescription(`It landed on **${result}**!`)
+          .setTimestamp()],
+      });
+    }
+
+    else if (commandName === 'ownerid') {
+      await interaction.reply({
+        ephemeral: true,
+        embeds: [new EmbedBuilder()
+          .setColor(0x5865f2)
+          .setTitle('🔑 Your Discord User ID')
+          .setDescription(`Your ID is:\n\`\`\`\n${interaction.user.id}\n\`\`\``)
+          .addFields({
+            name: 'How to set yourself as bot owner',
+            value: 'Copy the ID above, then go to your Replit project → **Secrets** → add or update `OWNER_IDS` with that value.\n\nMultiple owners: separate with commas — `123,456,789`',
+          })
+          .setFooter({ text: 'Only you can see this message' })
           .setTimestamp()],
       });
     }
