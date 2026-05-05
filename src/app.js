@@ -208,11 +208,7 @@ class SMPManager extends Client {
     });
 
     app.get('/', (req, res) => {
-      res.status(200).json({ 
-        message: 'SMP Manager System Online',
-        version: '2.0.0',
-        timestamp: new Date().toISOString()
-      });
+      res.redirect('/admin');
     });
 
     setupAdminRoutes(app, this);
