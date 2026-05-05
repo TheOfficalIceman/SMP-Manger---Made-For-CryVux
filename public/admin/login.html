@@ -28,12 +28,6 @@
       <input type="password" id="pwd" placeholder="Enter password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
 
-    <div class="login-field">
-      <label>Discord User ID <span style="text-transform:none;font-weight:400;color:var(--muted)">(optional — required for Unlimited mode)</span></label>
-      <input type="text" id="did" placeholder="e.g. 123456789012345678" autocomplete="off" onkeydown="if(event.key==='Enter')doLogin()">
-      <div class="field-hint">Right-click your profile → Copy User ID in Discord (Developer Mode must be on)</div>
-    </div>
-
     <button class="btn-login" id="login-btn" onclick="doLogin()">Sign In</button>
     <div class="login-error" id="login-err"></div>
   </div>
@@ -44,7 +38,6 @@ async function doLogin() {
   const btn = document.getElementById('login-btn');
   const err = document.getElementById('login-err');
   const pwd = document.getElementById('pwd').value;
-  const did = document.getElementById('did').value.trim();
 
   err.style.display = 'none';
   btn.textContent = 'Signing in...';
@@ -54,7 +47,7 @@ async function doLogin() {
     const res = await fetch('/admin/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: pwd, discordId: did })
+      body: JSON.stringify({ password: pwd })
     });
     const data = await res.json();
     if (res.ok) {
