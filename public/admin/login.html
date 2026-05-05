@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TitanBot — Sign In</title>
+  <link rel="stylesheet" href="/admin/css/style.css">
+</head>
+<body>
+<div class="login-page">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="bot-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2"/>
+          <circle cx="12" cy="5" r="2"/>
+          <path d="M12 7v4"/>
+          <line x1="8" y1="16" x2="8" y2="16"/>
+          <line x1="16" y1="16" x2="16" y2="16"/>
+        </svg>
+      </div>
+      <h1>TitanBot</h1>
+      <p>Admin Dashboard — Authorised Access Only</p>
+    </div>
+
+    <div class="login-field">
+      <label>Admin Password</label>
+      <input type="password" id="pwd" placeholder="Enter password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+
+    <div class="login-field">
+      <label>Discord User ID <span style="text-transform:none;font-weight:400;color:var(--muted)">(optional — required for Unlimited mode)</span></label>
+      <input type="text" id="did" placeholder="e.g. 123456789012345678" autocomplete="off" onkeydown="if(event.key==='Enter')doLogin()">
+      <div class="field-hint">Right-click your profile → Copy User ID in Discord (Developer Mode must be on)</div>
+    </div>
+
+    <button class="btn-login" id="login-btn" onclick="doLogin()">Sign In</button>
+    <div class="login-error" id="login-err"></div>
+  </div>
+</div>
+
+<script>
+async function doLogin() {
+  const btn = document.getElementById('login-btn');
+  const err = document.getElementById('login-err');
+  const pwd = document.getElementById('pwd').value;
+  const did = document.getElementById('did').value.trim();
+
+  err.style.display = 'none';
+  btn.textContent = 'Signing in...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('/admin/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pwd, discordId: did })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      window.location.href = '/admin';
+    } else {
+      err.textContent = data.error || 'Login failed';
+      err.style.display = 'block';
+    }
+  } catch (e) {
+    err.textContent = 'Network error — please try again';
+    err.style.display = 'block';
+  } finally {
+    btn.textContent = 'Sign In';
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TitanBot — Admin Dashboard</title>
+  <link rel="stylesheet" href="/admin/css/style.css">
+</head>
+<body>
+<div class="app">
+
+  <!-- ─── Sidebar ─────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2"/>
+          <circle cx="12" cy="5" r="2"/>
+          <path d="M12 7v4"/>
+          <line x1="8" y1="16" x2="8" y2="16"/>
+          <line x1="16" y1="16" x2="16" y2="16"/>
+        </svg>
+      </div>
+      <div class="sidebar-brand">
+        <div class="brand-name">TitanBot</div>
+        <div class="brand-sub">Admin Panel</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <span class="nav-section-label">Overview</span>
+        <div class="nav-item active" data-panel="overview" onclick="showPanel('overview',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M2 4a1 1 0 011-1h14a1 1 0 011 1v3a1 1 0 01-1 1H3a1 1 0 01-1-1V4zm0 7a1 1 0 011-1h6a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm10 0a1 1 0 011-1h4a1 1 0 011 1v5a1 1 0 01-1 1h-4a1 1 0 01-1-1v-5z"/></svg>
+          <span>Dashboard</span>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <span class="nav-section-label">Bot Config</span>
+        <div class="nav-item" data-panel="presence" onclick="showPanel('presence',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clip-rule="evenodd"/></svg>
+          <span>Presence & Status</span>
+        </div>
+        <div class="nav-item" data-panel="colors" onclick="showPanel('colors',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 000-2.828L13.485 5.1a2 2 0 00-2.828 0L10 5.757v8.486zM16 18H9.071l6-6H16a2 2 0 012 2v2a2 2 0 01-2 2z" clip-rule="evenodd"/></svg>
+          <span>Embed Colors</span>
+        </div>
+        <div class="nav-item" data-panel="economy" onclick="showPanel('economy',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"/></svg>
+          <span>Economy</span>
+        </div>
+        <div class="nav-item" data-panel="welcome" onclick="showPanel('welcome',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/></svg>
+          <span>Welcome & Goodbye</span>
+        </div>
+        <div class="nav-item" data-panel="misc" onclick="showPanel('misc',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/></svg>
+          <span>Misc Settings</span>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <span class="nav-section-label">Commands</span>
+        <div class="nav-item" data-panel="commands" onclick="showPanel('commands',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+          <span>Custom Commands</span>
+        </div>
+      </div>
+
+      <div class="nav-section" id="nav-unlimited" style="display:none">
+        <span class="nav-section-label">Unlimited</span>
+        <div class="nav-item" data-panel="whitelist" onclick="showPanel('whitelist',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/></svg>
+          <span>Whitelist</span>
+        </div>
+        <div class="nav-item" data-panel="setmoney" onclick="showPanel('setmoney',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/></svg>
+          <span>Set Balance</span>
+        </div>
+        <div class="nav-item" data-panel="rawconfig" onclick="showPanel('rawconfig',this)">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/></svg>
+          <span>Raw Config</span>
+        </div>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="bot-status-pill">
+        <div class="status-indicator" id="status-dot"></div>
+        <span class="status-text" id="status-text">Checking...</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ─── Main ─────────────────────────── -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <h2 id="panel-title">Dashboard</h2>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-badge" id="uptime-badge" style="display:none">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+          <span id="uptime-val">–</span>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="doLogout()">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd"/></svg>
+          Sign Out
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ─── Overview ─────────────────── -->
+      <div class="panel active" id="panel-overview">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon green"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.05 3.636a1 1 0 010 1.414 7 7 0 000 9.9 1 1 0 11-1.414 1.414 9 9 0 010-12.728 1 1 0 011.414 0zm9.9 0a1 1 0 011.414 0 9 9 0 010 12.728 1 1 0 11-1.414-1.414 7 7 0 000-9.9 1 1 0 010-1.414zM7.879 6.464a1 1 0 010 1.414 3 3 0 000 4.243 1 1 0 11-1.415 1.414 5 5 0 010-7.07 1 1 0 011.415 0zm4.242 0a1 1 0 011.415 0 5 5 0 010 7.072 1 1 0 01-1.415-1.415 3 3 0 000-4.242 1 1 0 010-1.415zM10 9a1 1 0 011 1v.01a1 1 0 11-2 0V10a1 1 0 011-1z" clip-rule="evenodd"/></svg></div>
+            <div class="stat-value" id="s-status">–</div>
+            <div class="stat-label">Bot Status</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon blue"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/></svg></div>
+            <div class="stat-value" id="s-guilds">–</div>
+            <div class="stat-label">Servers</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon purple"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/></svg></div>
+            <div class="stat-value" id="s-members">–</div>
+            <div class="stat-label">Total Members</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon accent"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg></div>
+            <div class="stat-value" id="s-uptime">–</div>
+            <div class="stat-label">Uptime</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon yellow"><svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/></svg></div>
+            <div class="stat-value" id="s-ping">–</div>
+            <div class="stat-label">Ping (ms)</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z"/><path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z"/><path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z"/></svg></div>
+            <div class="stat-value" id="s-db">–</div>
+            <div class="stat-label">Database</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Quick Start</div>
+            <div class="card-desc">Use the sidebar to configure your bot. Changes to config sections take effect immediately for new interactions.</div>
+          </div>
+          <div class="info-list">
+            <div class="info-row">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+              <div>Use <strong>Presence & Status</strong> to set what Discord shows under the bot's name.</div>
+            </div>
+            <div class="info-row">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+              <div>Use <strong>Custom Commands</strong> to build <code style="background:var(--input-bg);padding:1px 6px;border-radius:4px;color:var(--accent)">!</code> prefix commands that go live instantly.</div>
+            </div>
+            <div class="info-row">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+              <div>Log in with your whitelisted <strong>Discord ID</strong> to unlock Unlimited mode with the Raw Config editor.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Presence ─────────────────── -->
+      <div class="panel" id="panel-presence">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Bot Presence & Status</div>
+            <div class="card-desc">Control what Discord shows beneath the bot's username in the member list.</div>
+          </div>
+
+          <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab(this,'pres','pres-status')">Online Status</button>
+            <button class="tab-btn" onclick="switchTab(this,'pres','pres-activity')">Activity Text</button>
+          </div>
+
+          <div class="tab-content active" id="pres-status">
+            <div class="form-grid cols-1">
+              <div class="field">
+                <label>Online Status</label>
+                <select id="p-status">
+                  <option value="online">🟢  Online</option>
+                  <option value="idle">🟡  Idle</option>
+                  <option value="dnd">🔴  Do Not Disturb</option>
+                  <option value="invisible">⚫  Invisible (appears offline)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-content" id="pres-activity">
+            <div class="form-grid">
+              <div class="field">
+                <label>Activity Type</label>
+                <select id="p-atype">
+                  <option value="0">🎮  Playing</option>
+                  <option value="1">📺  Streaming</option>
+                  <option value="2">🎵  Listening to</option>
+                  <option value="3">👁️  Watching</option>
+                  <option value="5">🏆  Competing in</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Activity Text</label>
+                <input id="p-aname" placeholder="e.g. your SMP">
+              </div>
+            </div>
+          </div>
+
+          <div class="save-bar">
+            <button class="btn btn-ghost" onclick="loadConfig()">Reset</button>
+            <button class="btn btn-primary" onclick="savePresence()">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293z"/></svg>
+              Save Presence
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Colors ─────────────────── -->
+      <div class="panel" id="panel-colors">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Embed Colors</div>
+            <div class="card-desc">These colors are used in all bot embed messages throughout your server.</div>
+          </div>
+
+          <div class="color-grid" id="color-grid">
+            <!-- Injected by JS -->
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="field">
+            <label>Embed Footer Text</label>
+            <input id="c-footer" placeholder="TitanBot">
+            <div class="hint">Shown at the bottom of all bot embeds.</div>
+          </div>
+
+          <div class="save-bar">
+            <button class="btn btn-ghost" onclick="loadConfig()">Reset</button>
+            <button class="btn btn-primary" onclick="saveColors()">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293z"/></svg>
+              Save Colors
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Economy ─────────────────── -->
+      <div class="panel" id="panel-economy">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Economy Settings</div>
+            <div class="card-desc">Configure your server's currency and economy system.</div>
+          </div>
+
+          <div class="section-label">Currency</div>
+          <div class="form-grid" style="margin-bottom:18px">
+            <div class="field">
+              <label>Currency Name (singular)</label>
+              <input id="e-name" placeholder="coin">
+            </div>
+            <div class="field">
+              <label>Currency Name (plural)</label>
+              <input id="e-plural" placeholder="coins">
+            </div>
+            <div class="field">
+              <label>Currency Symbol</label>
+              <input id="e-symbol" placeholder="🪙" maxlength="4">
+            </div>
+            <div class="field">
+              <label>Starting Balance</label>
+              <input id="e-start" type="number" placeholder="0" min="0">
+            </div>
+          </div>
+
+          <div class="section-label">Payouts</div>
+          <div class="form-grid cols-3" style="margin-bottom:18px">
+            <div class="field">
+              <label>Daily Reward</label>
+              <input id="e-daily" type="number" placeholder="100" min="0">
+            </div>
+            <div class="field">
+              <label>Work Min</label>
+              <input id="e-wmin" type="number" placeholder="10" min="0">
+            </div>
+            <div class="field">
+              <label>Work Max</label>
+              <input id="e-wmax" type="number" placeholder="100" min="0">
+            </div>
+            <div class="field">
+              <label>Beg Min</label>
+              <input id="e-bmin" type="number" placeholder="5" min="0">
+            </div>
+            <div class="field">
+              <label>Beg Max</label>
+              <input id="e-bmax" type="number" placeholder="50" min="0">
+            </div>
+            <div class="field">
+              <label>Rob Success Rate (0–1)</label>
+              <input id="e-rob" type="number" step="0.01" placeholder="0.4" min="0" max="1">
+            </div>
+          </div>
+
+          <div class="save-bar">
+            <button class="btn btn-ghost" onclick="loadConfig()">Reset</button>
+            <button class="btn btn-primary" onclick="saveEconomy()">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293z"/></svg>
+              Save Economy
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Welcome ─────────────────── -->
+      <div class="panel" id="panel-welcome">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Welcome & Goodbye Messages</div>
+            <div class="card-desc">Customise the messages sent when members join or leave the server.</div>
+          </div>
+
+          <div class="info-box" style="margin-bottom:18px">
+            Available placeholders: <code style="background:rgba(255,255,255,.07);padding:1px 6px;border-radius:3px">{user}</code> &nbsp; <code style="background:rgba(255,255,255,.07);padding:1px 6px;border-radius:3px">{server}</code> &nbsp; <code style="background:rgba(255,255,255,.07);padding:1px 6px;border-radius:3px">{memberCount}</code>
+          </div>
+
+          <div class="form-grid cols-1">
+            <div class="field">
+              <label>Welcome Message</label>
+              <textarea id="w-welcome" rows="4" placeholder="Welcome {user} to {server}! We now have {memberCount} members!"></textarea>
+            </div>
+            <div class="field">
+              <label>Goodbye Message</label>
+              <textarea id="w-goodbye" rows="4" placeholder="{user} has left the server. We now have {memberCount} members."></textarea>
+            </div>
+          </div>
+
+          <div class="save-bar">
+            <button class="btn btn-ghost" onclick="loadConfig()">Reset</button>
+            <button class="btn btn-primary" onclick="saveWelcome()">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293z"/></svg>
+              Save Messages
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Misc ─────────────────── -->
+      <div class="panel" id="panel-misc">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Misc Settings</div>
+            <div class="card-desc">General bot configuration options.</div>
+          </div>
+          <div class="form-grid">
+            <div class="field">
+              <label>Command Prefix</label>
+              <input id="m-prefix" placeholder="!" maxlength="5">
+              <div class="hint">Used for text-based commands (e.g. <code>!</code>help)</div>
+            </div>
+            <div class="field">
+              <label>Default Cooldown (seconds)</label>
+              <input id="m-cooldown" type="number" placeholder="3" min="0">
+            </div>
+          </div>
+          <div class="save-bar">
+            <button class="btn btn-ghost" onclick="loadConfig()">Reset</button>
+            <button class="btn btn-primary" onclick="saveMisc()">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293z"/></svg>
+              Save Settings
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Custom Commands ─────────────────── -->
+      <div class="panel" id="panel-commands">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Command Builder</div>
+            <div class="card-desc">Create custom <code style="background:var(--input-bg);padding:1px 6px;border-radius:4px;color:var(--accent)">!</code> prefix commands. They go live instantly — no restart needed.</div>
+          </div>
+
+          <div class="form-grid">
+            <div class="field">
+              <label>Command Name</label>
+              <div class="input-prefix">
+                <span class="prefix">!</span>
+                <input id="b-name" placeholder="mycommand" oninput="updatePreview()">
+              </div>
+              <div class="hint">Letters, numbers, _ and - only</div>
+            </div>
+            <div class="field">
+              <label>Response Type</label>
+              <select id="b-type" onchange="toggleEmbedFields(); updatePreview()">
+                <option value="text">💬  Plain Text</option>
+                <option value="embed">🪄  Rich Embed</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="text-fields">
+            <div class="field">
+              <label>Response Message</label>
+              <textarea id="b-response" rows="3" placeholder="Your response... Use {user} for mention, {server} for server name" oninput="updatePreview()"></textarea>
+            </div>
+          </div>
+
+          <div id="embed-fields" style="display:none">
+            <div class="form-grid">
+              <div class="field">
+                <label>Embed Title</label>
+                <input id="b-etitle" placeholder="My Command" oninput="updatePreview()">
+              </div>
+              <div class="field">
+                <label>Embed Color</label>
+                <input type="color" id="b-ecolor" value="#5865F2" oninput="updatePreview()">
+              </div>
+            </div>
+            <div class="field">
+              <label>Embed Description</label>
+              <textarea id="b-edesc" rows="3" placeholder="Description... Use {user}, {server}" oninput="updatePreview()"></textarea>
+            </div>
+            <div class="field">
+              <label>Embed Footer (optional)</label>
+              <input id="b-efooter" placeholder="TitanBot" oninput="updatePreview()">
+            </div>
+          </div>
+
+          <div style="margin:14px 0">
+            <div class="toggle-row">
+              <div class="toggle-info">
+                <div class="tname">Owner Only</div>
+                <div class="tdesc">Only the bot owner can use this command</div>
+              </div>
+              <label class="toggle"><input type="checkbox" id="b-owner"><span class="toggle-track"></span></label>
+            </div>
+          </div>
+
+          <div class="field">
+            <div class="field-label">Live Preview</div>
+            <div class="preview-wrap" id="preview-box">
+              <span style="color:var(--muted);font-size:13px">Fill in the form above to see a preview...</span>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
+            <button class="btn btn-ghost" onclick="clearBuilder()">Clear</button>
+            <button class="btn btn-primary" onclick="saveCommand()">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293z"/></svg>
+              Save Command
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Your Custom Commands</div>
+            <div class="card-desc">Click any command to load it into the builder for editing.</div>
+          </div>
+          <div class="cmd-list" id="cmd-list">
+            <div style="color:var(--muted);font-size:13px;padding:8px 0">Loading commands...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Whitelist ─────────────────── -->
+      <div class="panel" id="panel-whitelist">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Admin Whitelist</div>
+            <div class="card-desc">Discord IDs allowed into Unlimited mode of this panel. Bot owners (from OWNER_IDS env variable) are always allowed.</div>
+          </div>
+
+          <div class="form-grid">
+            <div class="field">
+              <label>Discord User ID</label>
+              <input id="wl-id" placeholder="123456789012345678">
+            </div>
+            <div class="field" style="justify-content:flex-end;flex-direction:row;align-items:flex-end;gap:8px">
+              <button class="btn btn-success" onclick="wlAction('add')">
+                <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg>
+                Add
+              </button>
+              <button class="btn btn-danger" onclick="wlAction('remove')">
+                <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                Remove
+              </button>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="section-label">Whitelisted Users</div>
+          <div class="id-list" id="wl-list"><span style="color:var(--muted);font-size:12px">None yet</span></div>
+
+          <div style="margin-top:18px">
+            <div class="section-label">Owner IDs (from env)</div>
+            <div class="id-list" id="wl-owners"><span style="color:var(--muted);font-size:12px">None set</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Set Balance ─────────────────── -->
+      <div class="panel" id="panel-setmoney">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Set Balance</div>
+            <div class="card-desc">Directly overwrite a user's wallet or bank balance. Requires Unlimited mode. All changes are logged.</div>
+          </div>
+          <div class="info-box warning" style="margin-bottom:18px">
+            ⚠️ This bypasses all economy limits. Use with care — all actions are recorded in the server log.
+          </div>
+          <div class="form-grid cols-3">
+            <div class="field">
+              <label>Discord User ID</label>
+              <input id="sm-id" placeholder="123456789012345678">
+            </div>
+            <div class="field">
+              <label>Amount</label>
+              <input type="number" id="sm-amt" placeholder="100000" min="0">
+            </div>
+            <div class="field">
+              <label>Type</label>
+              <select id="sm-type">
+                <option value="wallet">Wallet</option>
+                <option value="bank">Bank</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;margin-top:14px">
+            <button class="btn btn-primary" onclick="setBalance()">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/></svg>
+              Set Balance
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Raw Config ─────────────────── -->
+      <div class="panel" id="panel-rawconfig">
+        <div class="info-box warning" style="margin-bottom:18px">
+          ⚠️ Expert only. Incorrect JSON can break features. Config changes apply immediately.
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">File Overrides</div>
+            <div class="card-desc">Contents of <code style="background:var(--input-bg);padding:1px 5px;border-radius:3px;font-size:11px">data/bot-config-overrides.json</code></div>
+          </div>
+          <textarea class="code-editor" id="rc-overrides" rows="14"></textarea>
+          <div class="save-bar">
+            <button class="btn btn-ghost btn-sm" onclick="loadRC()">↻ Reload</button>
+            <button class="btn btn-primary btn-sm" onclick="saveRC('fileOverrides','rc-overrides')">Save Overrides</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Custom Commands (JSON)</div>
+            <div class="card-desc">Contents of <code style="background:var(--input-bg);padding:1px 5px;border-radius:3px;font-size:11px">data/custom-commands.json</code></div>
+          </div>
+          <textarea class="code-editor" id="rc-cmds" rows="12"></textarea>
+          <div class="save-bar">
+            <button class="btn btn-ghost btn-sm" onclick="loadRC()">↻ Reload</button>
+            <button class="btn btn-primary btn-sm" onclick="saveRC('customCommands','rc-cmds')">Save Commands</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Global Guild Config (DB)</div>
+            <div class="card-desc">The global guild config stored in the database.</div>
+          </div>
+          <textarea class="code-editor" id="rc-gcfg" rows="14"></textarea>
+          <div class="save-bar">
+            <button class="btn btn-ghost btn-sm" onclick="loadRC()">↻ Reload</button>
+            <button class="btn btn-primary btn-sm" onclick="saveRC('globalGuildConfig','rc-gcfg')">Save Config</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<script src="/admin/js/app.js"></script>
+</body>
+</html>
