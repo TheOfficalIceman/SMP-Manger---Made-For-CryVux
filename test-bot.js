@@ -47,13 +47,19 @@ async function registerCommands() {
   try {
     if (GUILD_ID) {
       await rest.put(Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID), { body: commands });
-      console.log(`[TestBot] ✅ Registered ${commands.length} guild commands (guild: ${GUILD_ID})`);
+      console.log(`[TestBot] ✅ Registered ${commands.length} guild slash commands`);
     } else {
       await rest.put(Routes.applicationCommands(CLIENT_ID), { body: commands });
-      console.log(`[TestBot] ✅ Registered ${commands.length} global commands (may take up to 1 hour to appear)`);
+      console.log(`[TestBot] ✅ Registered ${commands.length} global slash commands (may take up to 1 hour to appear)`);
     }
   } catch (err) {
-    console.error('[TestBot] ❌ Failed to register commands:', err.message);
+    if (err.code === 50001 || err.message?.includes('Missing Access')) {
+      console.error('[TestBot] ❌ Missing Access — the bot has not been invited to the server with the correct scopes.');
+      console.error('[TestBot] 👉 Use this invite link (replace CLIENT_ID with your bot\'s Application ID):');
+      console.error(`[TestBot]    https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&permissions=8&scope=bot%20applications.commands`);
+    } else {
+      console.error('[TestBot] ❌ Failed to register commands:', err.message);
+    }
   }
 }
 
